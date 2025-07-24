@@ -166,7 +166,7 @@ Here's the config for testing on testnet:
 - [malda-lending/src/utils/WrapAndSupply.sol](malda-lending/src/utils/WrapAndSupply.sol)
 - [malda-lending/src/verifier/ZkVerifier.sol](malda-lending/src/verifier/ZkVerifier.sol)
 
-[malda-zk-coprocessor @ 51d3095e7f7e3bb3ffcdb115bc4c7271ffc05594](https://github.com/malda-protocol/malda-zk-coprocessor/tree/51d3095e7f7e3bb3ffcdb115bc4c7271ffc05594)
+[malda-zk-coprocessor @ 813060dd27ad8658a2e6009260b05e69bafaab8d](https://github.com/malda-protocol/malda-zk-coprocessor/tree/813060dd27ad8658a2e6009260b05e69bafaab8d)
 - [malda-zk-coprocessor/malda_rs/src/constants.rs](malda-zk-coprocessor/malda_rs/src/constants.rs)
 - [malda-zk-coprocessor/malda_rs/src/elfs_ids.rs](malda-zk-coprocessor/malda_rs/src/elfs_ids.rs)
 - [malda-zk-coprocessor/malda_rs/src/lib.rs](malda-zk-coprocessor/malda_rs/src/lib.rs)
