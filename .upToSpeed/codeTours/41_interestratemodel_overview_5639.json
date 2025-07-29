@@ -1,0 +1,197 @@
+{
+  "title": "4.1: InterestRateModel: Overview",
+  "id": "sQE9l5h1UnwHf7XhCWMo/5K+Q1X836pnMt6GPZW29YM=",
+  "originalId": 5639,
+  "position": 10,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "In **DeFi**, dynamic interest rates help balance supply and demand and maintain protocol solvency. Malda uses a modular `InterestRateModel` component to compute per-block borrow and supply rates on-chain.",
+      "title": "",
+      "id": "70794"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/interfaces/IInterestRateModel.sol"
+      ],
+      "description": "The `IInterestRateModel` interface declares the core methods any on-chain rate model must implement. Markets plug in any `contract` implementing this `interface`, enforcing a consistent API.",
+      "title": "",
+      "id": "70795",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `isInterestRateModel()` function returns true to verify a contract implements the interface. Markets call this check when setting or updating their interest rate model to prevent misconfiguration.",
+      "file": "malda-lending/src/interfaces/IInterestRateModel.sol",
+      "highlight": [
+        {
+          "start": 40,
+          "end": 43
+        }
+      ],
+      "title": "",
+      "id": "70796",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "`getBorrowRate(cash, borrows, reserves)` signature: inputs describe current market liquidity, outputs the per-block borrow rate. Rates rise with utilization to protect lenders when capital is scarce.",
+      "file": "malda-lending/src/interfaces/IInterestRateModel.sol",
+      "highlight": [
+        {
+          "start": 90,
+          "end": 97
+        }
+      ],
+      "title": "",
+      "id": "70797",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "`getSupplyRate(cash, borrows, reserves, reserveFactorMantissa)` signature: computes the per-block supply rate for lenders by adjusting the borrow rate by utilization and deducting reserves.",
+      "file": "malda-lending/src/interfaces/IInterestRateModel.sol",
+      "highlight": [
+        {
+          "start": 99,
+          "end": 110
+        }
+      ],
+      "title": "",
+      "id": "70798",
+      "hideAreas": []
+    },
+    {
+      "type": "textOnly",
+      "description": "`JumpRateModelV4` is a concrete implementation of `IInterestRateModel` that adds a **'jump rate'** curve to sharply increase rates beyond a utilization threshold.",
+      "title": "",
+      "id": "70799"
+    },
+    {
+      "type": "highlight",
+      "description": "Contract declaration `JumpRateModelV4 is IInterestRateModel, Ownable` shows it implements the interface and has owner-only update functions.",
+      "file": "malda-lending/src/interest/JumpRateModelV4.sol",
+      "highlight": [
+        {
+          "start": 33,
+          "end": 33
+        }
+      ],
+      "title": "",
+      "id": "70800",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "`utilizationRate(cash, borrows, reserves)` computes how much of available liquidity is in use: `borrows × 1e18 / (cash + borrows − reserves)`.",
+      "file": "malda-lending/src/interest/JumpRateModelV4.sol",
+      "highlight": [
+        {
+          "start": 130,
+          "end": 135
+        }
+      ],
+      "title": "",
+      "id": "70801",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "`getBorrowRate()` uses a two-phase formula: below **kink** it applies a linear slope; above **kink** it adds a higher `jump` slope on excess utilization to throttle extreme borrowing.",
+      "file": "malda-lending/src/interest/JumpRateModelV4.sol",
+      "highlight": [
+        {
+          "start": 140,
+          "end": 149
+        }
+      ],
+      "title": "",
+      "id": "70802",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "`getSupplyRate()` derives the supply rate as utilization × (`borrowRate` × (1 − `reserveFactorMantissa`) ÷ `1e18`) ÷ `1e18`, so lenders earn net of reserves and only on utilized funds.",
+      "file": "malda-lending/src/interest/JumpRateModelV4.sol",
+      "highlight": [
+        {
+          "start": 155,
+          "end": 164
+        }
+      ],
+      "title": "",
+      "id": "70803",
+      "hideAreas": []
+    },
+    {
+      "type": "mcq",
+      "description": "Given the `JumpRateModelV4` implementation, which statement accurately describes how the supply rate is determined?\n\nOptions:\n\n A). The supply rate is the borrow rate directly reduced by the `reserveFactorMantissa`.\n\nB). The supply rate is calculated from the borrow rate, adjusted for the `reserveFactorMantissa`, and then multiplied by the market's utilization rate.\n\nC). The supply rate is calculated using its own set of parameters (base rate, multiplier), independent of the borrow rate.\n\nD). The supply rate equals the borrow rate when market utilization is at 100%.\n\n\nCorrect: B). The supply rate is calculated from the borrow rate, adjusted for the `reserveFactorMantissa`, and then multiplied by the market's utilization rate.\n\nExplanation: The correct answer is that the supply rate is derived from the borrow rate, adjusted for reserves, and scaled by utilization. The `getSupplyRate` function first calculates the `rateToPool` by applying the `oneMinusReserveFactor` to the `getBorrowRate` result. This `rateToPool` is then multiplied by the `utilizationRate`. This ensures lenders are only paid from interest generated on borrowed capital, not on idle assets, and that the protocol retains its share via the reserve factor.",
+      "title": "",
+      "id": "70809",
+      "text": "Given the `JumpRateModelV4` implementation, which statement accurately describes how the supply rate is determined?",
+      "answers": [
+        "The supply rate is the borrow rate directly reduced by the `reserveFactorMantissa`.",
+        "The supply rate is calculated from the borrow rate, adjusted for the `reserveFactorMantissa`, and then multiplied by the market's utilization rate.",
+        "The supply rate is calculated using its own set of parameters (base rate, multiplier), independent of the borrow rate.",
+        "The supply rate equals the borrow rate when market utilization is at 100%."
+      ],
+      "correct": 1,
+      "explanation": "The correct answer is that the supply rate is derived from the borrow rate, adjusted for reserves, and scaled by utilization. The `getSupplyRate` function first calculates the `rateToPool` by applying the `oneMinusReserveFactor` to the `getBorrowRate` result. This `rateToPool` is then multiplied by the `utilizationRate`. This ensures lenders are only paid from interest generated on borrowed capital, not on idle assets, and that the protocol retains its share via the reserve factor."
+    },
+    {
+      "type": "textOnly",
+      "description": "Markets wire up to these models.",
+      "title": "",
+      "id": "70804"
+    },
+    {
+      "type": "highlight",
+      "description": "This is where the `isInterestRateModel` function we saw earlier comes into play. The `require` statement calls it to verify that the new address is a valid interest rate model contract, guarding against incorrect addresses being set.",
+      "file": "malda-lending/src/mToken/mTokenConfiguration.sol",
+      "highlight": [
+        {
+          "start": 127,
+          "end": 133
+        }
+      ],
+      "title": "",
+      "id": "70805",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "During `accrueInterest()`, the market calls `getBorrowRate()` on its model to compute `borrowRateMantissa`, driving interest accumulation and updates to `totalBorrows` and `totalReserves`.",
+      "file": "malda-lending/src/mToken/mTokenStorage.sol",
+      "highlight": [
+        {
+          "start": 351,
+          "end": 354
+        }
+      ],
+      "title": "",
+      "id": "70806",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "`supplyRatePerBlock()` calls `getSupplyRate()` on the model, providing a real-time per-block supply rate for lenders.",
+      "file": "malda-lending/src/mToken/mToken.sol",
+      "highlight": [
+        {
+          "start": 116,
+          "end": 119
+        }
+      ],
+      "title": "",
+      "id": "70807",
+      "hideAreas": []
+    },
+    {
+      "type": "textOnly",
+      "description": "By decoupling interface, implementation, and market integration, Malda’s `InterestRateModel` component delivers a flexible, governance-tunable mechanism for dynamic interest pricing that aligns borrower costs, lender rewards, and protocol health.",
+      "title": "",
+      "id": "70808"
+    }
+  ]
+}

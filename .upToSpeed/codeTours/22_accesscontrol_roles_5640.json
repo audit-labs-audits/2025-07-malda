@@ -1,0 +1,181 @@
+{
+  "title": "2.2: AccessControl: Roles",
+  "id": "FE5ok3JFd69hZSA03T4QbcxuubnvE7wmmbb9ElfwwzY=",
+  "originalId": 5640,
+  "position": 3,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Welcome to our walkthrough of the `AccessControl` system in this lending protocol. We'll explore how roles are defined and managed, starting with the `interface` that establishes all available roles.",
+      "title": "",
+      "id": "70845"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/interfaces/IRoles.sol"
+      ],
+      "description": "The `IRoles` interface serves as a contract that defines all roles available in the lending protocol. It acts as a blueprint ensuring consistent role management across the system.",
+      "title": "",
+      "id": "70846",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "`REBALANCER` manages automated portfolio rebalancing to maintain optimal collateral ratios. `REBALANCER_EOA` handles rebalancing operations specifically for externally owned accounts. `GUARDIAN_PAUSE` provides emergency shutdown capability to protect users during security incidents or market volatility.",
+      "file": "malda-lending/src/interfaces/IRoles.sol",
+      "highlight": [
+        {
+          "start": 32,
+          "end": 42
+        }
+      ],
+      "title": "",
+      "id": "70847",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "`GUARDIAN_BRIDGE` oversees cross-chain asset transfers and bridge security. `GUARDIAN_BORROW_CAP` sets maximum borrowing limits to prevent overleveraging. `GUARDIAN_SUPPLY_CAP` manages supply caps to control protocol exposure. `GUARDIAN_RESERVE` manages reserve funds that backstop the protocol during liquidation events.",
+      "file": "malda-lending/src/interfaces/IRoles.sol",
+      "highlight": [
+        {
+          "start": 47,
+          "end": 62
+        }
+      ],
+      "title": "",
+      "id": "70848",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "**PROOF_FORWARDER** submits cryptographic proofs for cross-chain operations. **PROOF_BATCH_FORWARDER** optimizes gas costs by batching multiple proof submissions. **SEQUENCER** controls transaction ordering to prevent **MEV** attacks and ensure fair execution.",
+      "file": "malda-lending/src/interfaces/IRoles.sol",
+      "highlight": [
+        {
+          "start": 67,
+          "end": 82
+        }
+      ],
+      "title": "",
+      "id": "70849",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "`PAUSE_MANAGER` coordinates system-wide pause mechanisms during maintenance or emergencies. `CHAINS_MANAGER` oversees multi-chain protocol deployments and configurations. `GUARDIAN_ORACLE` manages price feed sources and validates oracle data integrity. `GUARDIAN_BLACKLIST` prevents malicious actors from accessing protocol functions.",
+      "file": "malda-lending/src/interfaces/IRoles.sol",
+      "highlight": [
+        {
+          "start": 82,
+          "end": 97
+        }
+      ],
+      "title": "",
+      "id": "70850",
+      "hideAreas": []
+    },
+    {
+      "type": "textOnly",
+      "description": "Now let's examine how these roles are implemented in the concrete Roles contract.",
+      "title": "",
+      "id": "70851"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/Roles.sol"
+      ],
+      "description": "The `Roles contract` provides the actual implementation of role management, storing permissions and providing access control functionality throughout the protocol.",
+      "title": "",
+      "id": "70852",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "This **nested mapping** is the heart of the **permission system**. The **outer key** identifies the **contract** requesting access, the **inner key** specifies which **role** is needed, and the **boolean** indicates permission status. This design allows granular per-contract, per-role permissions rather than global role assignments.",
+      "file": "malda-lending/src/Roles.sol",
+      "highlight": [
+        {
+          "start": 33,
+          "end": 33
+        }
+      ],
+      "title": "",
+      "id": "70853",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "Role identifiers use `keccak256` hashing instead of `string storage` for gas efficiency and deterministic generation. Each constant produces a unique **32-byte identifier** that's impossible to collide with accidentally, while remaining human-readable in source code for developer clarity.",
+      "file": "malda-lending/src/Roles.sol",
+      "highlight": [
+        {
+          "start": 35,
+          "end": 48
+        }
+      ],
+      "title": "",
+      "id": "70854",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `allowFor` function is the exclusive gateway for role management. The `onlyOwner` modifier ensures centralized control, preventing unauthorized role changes. Input validation on **line 70** prevents accidental grants to zero addresses. The event emission enables off-chain monitoring of permission changes for security and governance transparency.",
+      "file": "malda-lending/src/Roles.sol",
+      "highlight": [
+        {
+          "start": 69,
+          "end": 73
+        }
+      ],
+      "title": "",
+      "id": "70855",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "Other contracts use `isAllowedFor` to check permissions before executing sensitive operations. For example, a lending pool might call `roles.isAllowedFor(msg.sender, GUARDIAN_PAUSE)` before allowing pause functionality, ensuring only authorized guardians can halt operations during emergencies.",
+      "file": "malda-lending/src/Roles.sol",
+      "highlight": [
+        {
+          "start": 58,
+          "end": 60
+        }
+      ],
+      "title": "",
+      "id": "70856",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "`OpenZeppelin`'s `Ownable` inheritance provides battle-tested ownership functionality with secure transfer mechanisms. This creates a single point of administrative control while maintaining the flexibility to transfer ownership if governance structures change. The owner becomes the ultimate authority over all role assignments.",
+      "file": "malda-lending/src/Roles.sol",
+      "highlight": [
+        {
+          "start": 26,
+          "end": 30
+        }
+      ],
+      "title": "",
+      "id": "70857",
+      "hideAreas": []
+    },
+    {
+      "type": "mcq",
+      "description": "A new contract, `LendingPool.sol`, needs to implement a function that can only be called by an address holding the `GUARDIAN_PAUSE` role. Given the architecture of `Roles.sol`, what is the most appropriate implementation for the access control check within `LendingPool.sol`?\n\nOptions:\n\n A). The `LendingPool` contract should inherit from `Roles.sol` and use an internal check like `_roles[msg.sender][GUARDIAN_PAUSE]`.\n\nB). The `LendingPool` contract should hold a reference to the `Roles` contract and call `roles.isAllowedFor(msg.sender, roles.GUARDIAN_PAUSE())`.\n\nC). The `LendingPool` contract should implement its own `mapping(address => bool) private _isGuardian` and have the owner set permissions directly on `LendingPool`.\n\nD). The `LendingPool` contract should use a modifier that calls `roles.allowFor(msg.sender, roles.GUARDIAN_PAUSE(), true)` to verify permission.\n\n\nCorrect: B). The `LendingPool` contract should hold a reference to the `Roles` contract and call `roles.isAllowedFor(msg.sender, roles.GUARDIAN_PAUSE())`.\n\nExplanation: The correct approach is composition. `LendingPool` should store the address of the central `Roles` contract and query it using `isAllowedFor(msg.sender, ...)`. Inheriting would create unnecessary coupling, managing roles locally would fragment authority, and calling `allowFor` is incorrect as it's an owner-only function for granting roles, not checking them.",
+      "title": "",
+      "id": "70881",
+      "text": "A new contract, `LendingPool.sol`, needs to implement a function that can only be called by an address holding the `GUARDIAN_PAUSE` role. Given the architecture of `Roles.sol`, what is the most appropriate implementation for the access control check within `LendingPool.sol`?",
+      "answers": [
+        "The `LendingPool` contract should inherit from `Roles.sol` and use an internal check like `_roles[msg.sender][GUARDIAN_PAUSE]`.",
+        "The `LendingPool` contract should hold a reference to the `Roles` contract and call `roles.isAllowedFor(msg.sender, roles.GUARDIAN_PAUSE())`.",
+        "The `LendingPool` contract should implement its own `mapping(address => bool) private _isGuardian` and have the owner set permissions directly on `LendingPool`.",
+        "The `LendingPool` contract should use a modifier that calls `roles.allowFor(msg.sender, roles.GUARDIAN_PAUSE(), true)` to verify permission."
+      ],
+      "correct": 1,
+      "explanation": "The correct approach is composition. `LendingPool` should store the address of the central `Roles` contract and query it using `isAllowedFor(msg.sender, ...)`. Inheriting would create unnecessary coupling, managing roles locally would fragment authority, and calling `allowFor` is incorrect as it's an owner-only function for granting roles, not checking them."
+    }
+  ]
+}

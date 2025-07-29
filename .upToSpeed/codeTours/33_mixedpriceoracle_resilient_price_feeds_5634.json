@@ -1,0 +1,113 @@
+{
+  "title": "3.3: MixedPriceOracle: Resilient Price Feeds",
+  "id": "+9cw4xlGdwVlVnrnrtddw64w9gReoGEJHZbSjW3P//M=",
+  "originalId": 5634,
+  "position": 8,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "### The Need for Resilient Price Oracles\n\nIn decentralized finance (DeFi), smart contracts rely on oracles to fetch external data, like asset prices. A lending protocol using a single oracle source is vulnerable to several risks:\n\n*   **Oracle Downtime:** The oracle service may go offline.\n*   **Network Congestion:** The oracle's transactions might be delayed, leading to **stale** (outdated) prices.\n*   **Price Manipulation:** A malicious actor could potentially manipulate the price feed.\n\nAny of these issues could cause major problems, such as wrongful liquidations. To mitigate these risks, the `MixedPriceOracle` contracts in the `Malda` codebase implement fallback mechanisms.",
+      "title": "",
+      "id": "70571"
+    },
+    {
+      "type": "highlight",
+      "description": "### `MixedPriceOracleV3.sol`: Foundational Safety Checks\n\n`MixedPriceOracleV3.sol` enhances security by validating price data from a single source. It uses a `configs` mapping to store a `PriceConfig` for each asset, which contains a single `defaultFeed`. This version doesn't have a fallback oracle; instead, it reverts the transaction if the price is stale or invalid, laying the groundwork for more advanced versions.",
+      "file": "malda-lending/src/oracles/MixedPriceOracleV3.sol",
+      "highlight": [
+        {
+          "start": 20,
+          "end": 24
+        }
+      ],
+      "title": "",
+      "id": "70572",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `getUnderlyingPrice` function is the entry point for fetching an asset's price. It determines the underlying asset's symbol and calls `_getPriceUSD` (not shown) to retrieve and scale the price according to the asset's decimals.",
+      "file": "malda-lending/src/oracles/MixedPriceOracleV3.sol",
+      "highlight": [
+        {
+          "start": 75,
+          "end": 81
+        }
+      ],
+      "title": "",
+      "id": "70573",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The core logic resides in `_getLatestPrice`. This function fetches data from the single oracle specified in `config.defaultFeed`.\n\nIts safety mechanism is based on two checks:\n1.  **Line 106:** It verifies that the price is not zero or negative (`price > 0`).\n2.  **Line 109:** It ensures the price is not stale by comparing the last update time (`updatedAt`) with the current `block.timestamp`.\n\nIf either check fails, the contract reverts, preventing the use of invalid data. There is no attempt to consult a secondary source.",
+      "file": "malda-lending/src/oracles/MixedPriceOracleV3.sol",
+      "highlight": [
+        {
+          "start": 95,
+          "end": 115
+        }
+      ],
+      "title": "",
+      "id": "70574",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "### Evolving to `MixedPriceOracleV4.sol`: True Resiliency\n\n`MixedPriceOracleV4.sol` introduces a significant architectural improvement: a dual-oracle system with a true fallback mechanism. A key part of this is the new `PriceConfig` struct, which now holds addresses for two distinct oracles: `api3Feed` and `eOracleFeed`.",
+      "file": "malda-lending/src/oracles/MixedPriceOracleV4.sol",
+      "highlight": [
+        {
+          "start": 24,
+          "end": 29
+        }
+      ],
+      "title": "",
+      "id": "70575",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `getUnderlyingPrice` function in **V4** is structurally identical to its **V3** counterpart. All the significant enhancements are deeper inside the contract, within the `_getLatestPrice` function.",
+      "file": "malda-lending/src/oracles/MixedPriceOracleV4.sol",
+      "highlight": [
+        {
+          "start": 110,
+          "end": 116
+        }
+      ],
+      "title": "",
+      "id": "70576",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "Here is the enhanced `_getLatestPrice` function in V4, which implements the advanced fallback logic. The key improvements are:\n\n1.  **Dual Oracles (Lines 138-139):** It retrieves prices from two distinct oracles: `api3Feed` (the primary) and `eOracleFeed` (the secondary/fallback).\n2.  **Price Deviation Check (Lines 146-147):** It calculates the absolute difference between the two prices and expresses it as a basis point share (`deltaBps`) of the fallback price.\n3.  **Conditional Fallback (Line 156):** It uses the primary `api3Feed` price only if it's fresh AND the deviation from the secondary oracle is within an acceptable range (`deltaSymbol`). Otherwise, it falls back to the `eOracleFeed` price.\n4.  **Fallback Staleness Check (Line 157):** Before using the fallback price, the logic also verifies that the `eOracleFeed` itself is not stale. If both oracles are stale, the transaction will revert, preventing the use of dangerously outdated data.\n\nThis new logic ensures that the protocol can tolerate a failure or significant deviation in its primary oracle, automatically switching to a backup source to maintain a reliable price feed.",
+      "file": "malda-lending/src/oracles/MixedPriceOracleV4.sol",
+      "highlight": [
+        {
+          "start": 130,
+          "end": 167
+        }
+      ],
+      "title": "",
+      "id": "70577",
+      "hideAreas": []
+    },
+    {
+      "type": "mcq",
+      "description": "In `MixedPriceOracleV4.sol`, what logic determines whether to use the price from the fallback `eOracleFeed`?\n\nOptions:\n\n A). The `eOracleFeed` is used only if `api3Feed` is stale, regardless of price deviation.\n\nB). The `eOracleFeed` is used if `api3Feed` is stale OR the price deviation between the two feeds exceeds the configured limit.\n\nC). The contract reverts if `api3Feed` is stale; it never uses the `eOracleFeed` as a fallback.\n\nD). The `eOracleFeed` is used only if the price deviation is too large, even if `api3Feed` is fresh.\n\n\nCorrect: B). The `eOracleFeed` is used if `api3Feed` is stale OR the price deviation between the two feeds exceeds the configured limit.\n\nExplanation: The logic on line 156 (`if (!apiV3Fresh || deltaBps > deltaSymbol)`) dictates the fallback. The system uses the `eOracleFeed` if the primary `api3Feed` is stale (`!apiV3Fresh`) or if the price deviation (`deltaBps`) is larger than the allowed maximum (`deltaSymbol`). The contract only reverts if the chosen fallback feed is also stale, as checked on line 157.",
+      "title": "",
+      "id": "70578",
+      "text": "In `MixedPriceOracleV4.sol`, what logic determines whether to use the price from the fallback `eOracleFeed`?",
+      "answers": [
+        "The `eOracleFeed` is used only if `api3Feed` is stale, regardless of price deviation.",
+        "The `eOracleFeed` is used if `api3Feed` is stale OR the price deviation between the two feeds exceeds the configured limit.",
+        "The contract reverts if `api3Feed` is stale; it never uses the `eOracleFeed` as a fallback.",
+        "The `eOracleFeed` is used only if the price deviation is too large, even if `api3Feed` is fresh."
+      ],
+      "correct": 1,
+      "explanation": "The logic on line 156 (`if (!apiV3Fresh || deltaBps > deltaSymbol)`) dictates the fallback. The system uses the `eOracleFeed` if the primary `api3Feed` is stale (`!apiV3Fresh`) or if the price deviation (`deltaBps`) is larger than the allowed maximum (`deltaSymbol`). The contract only reverts if the chosen fallback feed is also stale, as checked on line 157."
+    }
+  ]
+}

@@ -1,0 +1,223 @@
+{
+  "title": "2.3: AccessControl: Blacklister",
+  "id": "8TRJQT/FDLWjFgxo2vtm1SiNveNE0qPtLs9TukVzRBY=",
+  "originalId": 5644,
+  "position": 4,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Let's explore the `AccessControl: Blacklister` system, which provides a mechanism for managing blacklisted addresses in the `Malda lending protocol`. We'll start with the interface definition and then dive into the implementation details.",
+      "title": "",
+      "id": "70707"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/interfaces/IBlacklister.sol"
+      ],
+      "description": "The **IBlacklister** interface defines the contract's public API. This interface establishes the foundation for blacklist management functionality.",
+      "title": "",
+      "id": "70708",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The interface defines two key events that track blacklist state changes. The `Blacklisted` event is emitted when a user is added to the blacklist, while `Unblacklisted` is emitted when a user is removed.",
+      "file": "malda-lending/src/interfaces/IBlacklister.sol",
+      "highlight": [
+        {
+          "start": 27,
+          "end": 29
+        }
+      ],
+      "title": "",
+      "id": "70709",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "Two view functions provide read access to the blacklist state. `getBlacklistedAddresses()` returns the complete list of blacklisted addresses, while `isBlacklisted()` checks if a specific address is currently blacklisted.",
+      "file": "malda-lending/src/interfaces/IBlacklister.sol",
+      "highlight": [
+        {
+          "start": 31,
+          "end": 36
+        }
+      ],
+      "title": "",
+      "id": "70710",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The interface defines two owner-restricted functions for managing the blacklist. `blacklist()` adds a user to the blacklist immediately, while `unblacklist()` removes them. Both are marked as **owner-only** actions in the comments.",
+      "file": "malda-lending/src/interfaces/IBlacklister.sol",
+      "highlight": [
+        {
+          "start": 38,
+          "end": 43
+        }
+      ],
+      "title": "",
+      "id": "70711",
+      "hideAreas": []
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/blacklister/Blacklister.sol"
+      ],
+      "description": "Now let's examine the `Blacklister` implementation, which provides the logic for the interface's access control and data management.",
+      "title": "",
+      "id": "70712",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The contract extends `OwnableUpgradeable` and implements the `IBlacklister` interface. It imports the `IRoles` interface to integrate with the protocol's role-based access control system.",
+      "file": "malda-lending/src/blacklister/Blacklister.sol",
+      "highlight": [
+        {
+          "start": 27,
+          "end": 33
+        }
+      ],
+      "title": "",
+      "id": "70713",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The blacklist state is maintained using two complementary data structures. The `isBlacklisted` mapping provides O(1) lookup performance to check if an address is blacklisted, while the `_blacklistedList` array enables enumeration of all blacklisted addresses.",
+      "file": "malda-lending/src/blacklister/Blacklister.sol",
+      "highlight": [
+        {
+          "start": 29,
+          "end": 31
+        }
+      ],
+      "title": "",
+      "id": "70714",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "This contract follows the upgradeable pattern using `OpenZeppelin`'s `upgradeable contracts`. The `constructor` disables `initializers` to prevent direct initialization, while the `initialize` function sets up the owner and stores a reference to the `roles operator contract`.",
+      "file": "malda-lending/src/blacklister/Blacklister.sol",
+      "highlight": [
+        {
+          "start": 40,
+          "end": 51
+        }
+      ],
+      "title": "",
+      "id": "70715",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `onlyOwnerOrGuardian` modifier demonstrates the integration with the `Roles` contract. It allows access to either the contract owner OR any address with the `GUARDIAN_BLACKLIST` role, providing flexible but secure access control for blacklist management.",
+      "file": "malda-lending/src/blacklister/Blacklister.sol",
+      "highlight": [
+        {
+          "start": 53,
+          "end": 56
+        }
+      ],
+      "title": "",
+      "id": "70716",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `GUARDIAN_BLACKLIST` role is defined in the `IRoles` interface, establishing it as part of the protocol's broader role-based access control system.",
+      "file": "malda-lending/src/interfaces/IRoles.sol",
+      "highlight": [
+        {
+          "start": 95,
+          "end": 98
+        }
+      ],
+      "title": "",
+      "id": "70717",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `blacklist` function uses the `onlyOwnerOrGuardian` modifier and includes a safety check to prevent duplicate blacklisting. If the user isn't already blacklisted, it delegates to the internal `_addToBlacklist` helper function.",
+      "file": "malda-lending/src/blacklister/Blacklister.sol",
+      "highlight": [
+        {
+          "start": 64,
+          "end": 67
+        }
+      ],
+      "title": "",
+      "id": "70718",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `unblacklist` function mirrors the `blacklist` function's structure, checking that the user is currently blacklisted before proceeding. It updates the mapping, removes the address from the array, and emits the appropriate event.",
+      "file": "malda-lending/src/blacklister/Blacklister.sol",
+      "highlight": [
+        {
+          "start": 69,
+          "end": 74
+        }
+      ],
+      "title": "",
+      "id": "70719",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `_addToBlacklist` internal helper function performs the actual blacklisting operation. It sets the mapping to true, appends the address to the array, and emits the `Blacklisted` event. This maintains consistency between both data structures.",
+      "file": "malda-lending/src/blacklister/Blacklister.sol",
+      "highlight": [
+        {
+          "start": 78,
+          "end": 82
+        }
+      ],
+      "title": "",
+      "id": "70720",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `_removeFromBlacklistList` helper efficiently removes an address from the array using the swap-and-pop technique. It finds the target address (`line 87`), replaces it with the last element (`line 88`), then removes the last element (`line 89`). This avoids expensive array shifting operations.",
+      "file": "malda-lending/src/blacklister/Blacklister.sol",
+      "highlight": [
+        {
+          "start": 84,
+          "end": 93
+        }
+      ],
+      "title": "",
+      "id": "70721",
+      "hideAreas": []
+    },
+    {
+      "type": "mcq",
+      "description": "Considering the implementation of `_removeFromBlacklistList` (lines 84-93), what is a direct consequence of its design?\n\nOptions:\n\n A). The gas cost of `unblacklist` scales with the total number of blacklisted addresses, regardless of the target address's position.\n\nB). The order of addresses returned by `getBlacklistedAddresses` is not stable across removal operations.\n\nC). Removing the last address in the list will revert due to an out-of-bounds read.\n\nD). It requires the `isBlacklisted` mapping to be cleared before it can successfully remove the address from the array.\n\n\nCorrect: B). The order of addresses returned by `getBlacklistedAddresses` is not stable across removal operations.\n\nExplanation: The correct answer is that the order is not stable. The swap-and-pop technique (lines 88-89) replaces the removed address with the last element in the array. This is very gas-efficient but disrupts the original order. The `break` statement (line 90) ensures the loop terminates once the address is found, so gas cost is proportional to the address's position, not the total list size. The logic correctly handles removing the last element, and the function is independent of the `isBlacklisted` mapping, which is handled separately in the `unblacklist` function.",
+      "title": "",
+      "id": "70723",
+      "text": "Considering the implementation of `_removeFromBlacklistList` (lines 84-93), what is a direct consequence of its design?",
+      "answers": [
+        "The gas cost of `unblacklist` scales with the total number of blacklisted addresses, regardless of the target address's position.",
+        "The order of addresses returned by `getBlacklistedAddresses` is not stable across removal operations.",
+        "Removing the last address in the list will revert due to an out-of-bounds read.",
+        "It requires the `isBlacklisted` mapping to be cleared before it can successfully remove the address from the array."
+      ],
+      "correct": 1,
+      "explanation": "The correct answer is that the order is not stable. The swap-and-pop technique (lines 88-89) replaces the removed address with the last element in the array. This is very gas-efficient but disrupts the original order. The `break` statement (line 90) ensures the loop terminates once the address is found, so gas cost is proportional to the address's position, not the total list size. The logic correctly handles removing the last element, and the function is independent of the `isBlacklisted` mapping, which is handled separately in the `unblacklist` function."
+    },
+    {
+      "type": "textOnly",
+      "description": "The `Blacklister` system implements several smart contract design patterns: **dual data structures** for different access patterns, an **upgradeable architecture**, **role-based access control**, and **gas-efficient array management**. Together, these components provide the system for managing blacklisted addresses within the `Malda` lending protocol.",
+      "title": "",
+      "id": "70722"
+    }
+  ]
+}

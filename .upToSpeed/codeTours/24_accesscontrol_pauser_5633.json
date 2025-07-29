@@ -1,0 +1,208 @@
+{
+  "title": "2.4: AccessControl: Pauser",
+  "id": "JMMdGDXFgGvHq1r+V+O95WviOL0F7Bs8dqNZPCg5BD0=",
+  "originalId": 5633,
+  "position": 5,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Welcome to our walkthrough of the `AccessControl Pauser` system. This emergency pause mechanism allows authorized users to quickly halt lending operations across markets when security issues arise or maintenance is required.",
+      "title": "",
+      "id": "70593"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/interfaces/IPauser.sol"
+      ],
+      "description": "Let's begin with the `IPauser` **interface**, which establishes the foundation for the pausing system architecture.",
+      "title": "",
+      "id": "70594",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "First, let's understand the `OperationType` enum that defines what operations can be paused. These encompass all critical **DeFi lending operations**: amount transfers, minting, borrowing, repaying, redeeming, liquidation, and rebalancing activities. This enum is imported and used throughout the pausing system.",
+      "file": "malda-lending/src/interfaces/ImToken.sol",
+      "highlight": [
+        {
+          "start": 28,
+          "end": 43
+        }
+      ],
+      "title": "",
+      "id": "70595",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `PausableType` enum categorizes contracts by their pause implementation. `NonPausable` contracts cannot be emergency paused, `Host` contracts are core mToken markets controlled through the **Operator**, and `Extension` contracts are gateway contracts with direct pause interfaces. The `PausableContract` struct pairs each market address with its pausable type for registry management.",
+      "file": "malda-lending/src/interfaces/IPauser.sol",
+      "highlight": [
+        {
+          "start": 29,
+          "end": 38
+        }
+      ],
+      "title": "",
+      "id": "70596",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "These events provide comprehensive tracking of pause activities. `PauseAll` signals system-wide emergency shutdown, `MarketPaused` indicates complete market halt, `MarketPausedFor` tracks specific operation pauses, while `MarketAdded` and `MarketRemoved` log registry changes.",
+      "file": "malda-lending/src/interfaces/IPauser.sol",
+      "highlight": [
+        {
+          "start": 46,
+          "end": 50
+        }
+      ],
+      "title": "",
+      "id": "70597",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The interface defines three levels of emergency controls. `emergencyPauseMarket` completely shuts down a single market, `emergencyPauseMarketFor` pauses only specific operations, and `emergencyPauseAll` triggers system-wide emergency halt across all registered markets.",
+      "file": "malda-lending/src/interfaces/IPauser.sol",
+      "highlight": [
+        {
+          "start": 52,
+          "end": 68
+        }
+      ],
+      "title": "",
+      "id": "70598",
+      "hideAreas": []
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/pauser/Pauser.sol"
+      ],
+      "description": "Now let's explore the `Pauser contract` implementation, which transforms the interface into a working system with role-based access control and contract registry management.",
+      "title": "",
+      "id": "70599",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The contract maintains two immutable dependencies: `roles` provides access to the protocol's role-based permission system, while `operator` offers the interface for pausing Host-type contracts. These immutable references ensure critical security relationships cannot be altered post-deployment.",
+      "file": "malda-lending/src/pauser/Pauser.sol",
+      "highlight": [
+        {
+          "start": 38,
+          "end": 39
+        }
+      ],
+      "title": "",
+      "id": "70600",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "Three complementary data structures manage the pausable contract registry. `pausableContracts` maintains an array for iteration during bulk operations, `registeredContracts` provides O(1) registration lookup, and `contractTypes` maps each address to its `PausableType`. The `_pause` function uses this mapping for its routing logic.",
+      "file": "malda-lending/src/pauser/Pauser.sol",
+      "highlight": [
+        {
+          "start": 41,
+          "end": 43
+        }
+      ],
+      "title": "",
+      "id": "70601",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `addPausableMarket` function enables the owner to register markets for emergency pausing. Line 60 implements **idempotent behavior** - returning early if a contract is already registered prevents duplicate entries and maintains registry consistency without throwing errors.",
+      "file": "malda-lending/src/pauser/Pauser.sol",
+      "highlight": [
+        {
+          "start": 58,
+          "end": 65
+        }
+      ],
+      "title": "",
+      "id": "70602",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `removePausableMarket` function efficiently removes markets from the registry. Lines 74-75 implement **swap-and-pop removal**, avoiding expensive array shifting by moving the last element to the removed position. The function also cleans up all associated mappings and resets the contract type to `NonPausable`.",
+      "file": "malda-lending/src/pauser/Pauser.sol",
+      "highlight": [
+        {
+          "start": 71,
+          "end": 79
+        }
+      ],
+      "title": "",
+      "id": "70603",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The three public emergency functions offer graduated response levels. `emergencyPauseMarket` triggers complete market shutdown, `emergencyPauseMarketFor` allows surgical pausing of specific operations, and `emergencyPauseAll` iterates through all registered contracts for system-wide emergency response. The loop uses `unchecked increment` for gas optimization.",
+      "file": "malda-lending/src/pauser/Pauser.sol",
+      "highlight": [
+        {
+          "start": 85,
+          "end": 109
+        }
+      ],
+      "title": "",
+      "id": "70604",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `_pauseAllMarketOperations` function demonstrates systematic pausing by calling `_pauseMarketOperation` for every operation type defined in the `enum`. This ensures comprehensive market shutdown - no lending operation can proceed when emergency pausing is triggered. Each operation is paused individually, allowing for granular event tracking.",
+      "file": "malda-lending/src/pauser/Pauser.sol",
+      "highlight": [
+        {
+          "start": 112,
+          "end": 126
+        }
+      ],
+      "title": "",
+      "id": "70605",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `_pause` function forms the system's core logic. Line 134 enforces role-based access control by verifying the caller holds the `PAUSE_MANAGER` role - this role is part of the protocol's broader access control system that manages various administrative permissions. Lines 136-142 implement intelligent routing: Host contracts are paused through the centralized Operator, Extension contracts receive direct pause calls, and NonPausable contracts trigger errors to prevent invalid operations.",
+      "file": "malda-lending/src/pauser/Pauser.sol",
+      "highlight": [
+        {
+          "start": 133,
+          "end": 143
+        }
+      ],
+      "title": "",
+      "id": "70606",
+      "hideAreas": []
+    },
+    {
+      "type": "mcq",
+      "description": "When `_pause` is executed for a market registered with `PausableType.Host`, which action is performed to enact the pause?\n\nOptions:\n\n A). It calls `setPaused` directly on the market's `ImTokenGateway` interface.\n\nB). It calls `setPaused` on the `operator` contract.\n\nC). It reverts with `Pauser_ContractNotEnabled`.\n\n\nCorrect: B). It calls `setPaused` on the `operator` contract.\n\nExplanation: The correct action is to call `setPaused` on the `operator` contract. The `_pause` function's logic routes pause requests based on `PausableType`. For `Host` contracts, it delegates the action to the central `Operator` contract. Calling `setPaused` on an `ImTokenGateway` is for `Extension` types, and the revert is for `NonPausable` types. The `Pauser` contract itself does not store the pause state; it acts as an authorized dispatcher.",
+      "title": "",
+      "id": "70611",
+      "text": "When `_pause` is executed for a market registered with `PausableType.Host`, which action is performed to enact the pause?",
+      "answers": [
+        "It calls `setPaused` directly on the market's `ImTokenGateway` interface.",
+        "It calls `setPaused` on the `operator` contract.",
+        "It reverts with `Pauser_ContractNotEnabled`."
+      ],
+      "correct": 1,
+      "explanation": "The correct action is to call `setPaused` on the `operator` contract. The `_pause` function's logic routes pause requests based on `PausableType`. For `Host` contracts, it delegates the action to the central `Operator` contract. Calling `setPaused` on an `ImTokenGateway` is for `Extension` types, and the revert is for `NonPausable` types. The `Pauser` contract itself does not store the pause state; it acts as an authorized dispatcher."
+    },
+    {
+      "type": "textOnly",
+      "description": "This completes our exploration of the Pauser system. The architecture provides flexible emergency controls with proper access controls, supporting different contract types through intelligent routing while maintaining centralized oversight and comprehensive pause capabilities across the lending protocol.",
+      "title": "",
+      "id": "70607"
+    }
+  ]
+}

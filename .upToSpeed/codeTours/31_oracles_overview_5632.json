@@ -1,0 +1,277 @@
+{
+  "title": "3.1: Oracles: Overview",
+  "id": "siPmaWWZZifxsVnXKh+Ebp18WONpJDRGDpbn9/3y7FA=",
+  "originalId": 5632,
+  "position": 6,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Welcome to this comprehensive walkthrough of the `Oracles` component in the `Malda lending protocol`. We'll explore how oracles provide critical price data that enables the protocol to make informed decisions about collateral values and risk management.",
+      "title": "",
+      "id": "70858"
+    },
+    {
+      "type": "textOnly",
+      "description": "In a lending protocol like **Malda**, oracles serve as the bridge between real-world asset prices and on-chain operations. The `Operator` contract relies on these oracles to get real-time asset prices for its risk calculations, determining when loans are safe or when liquidations should occur.",
+      "title": "",
+      "id": "70859"
+    },
+    {
+      "type": "textOnly",
+      "description": "Let's examine the structure of the `oracles` directory. This organized layout showcases three main oracle implementations with increasing sophistication, plus a dedicated `gas` subdirectory for cross-chain support.",
+      "title": "",
+      "id": "70860"
+    },
+    {
+      "type": "textOnly",
+      "description": "These oracle components work together within Malda's broader ecosystem. The protocol can choose the appropriate oracle based on deployment needs: `ChainlinkOracle` for straightforward implementations, `MixedPriceOracleV3` for production safety, or `MixedPriceOracleV4` for maximum resilience. The `gas helpers` enable cross-chain price synchronization across different blockchain networks.",
+      "title": "",
+      "id": "70861"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/oracles/ChainlinkOracle.sol"
+      ],
+      "description": "The `ChainlinkOracle` is the most straightforward oracle implementation. It provides a direct interface to `Chainlink` price feeds, which are widely trusted in the **DeFi** ecosystem for their reliability and decentralization.",
+      "title": "",
+      "id": "70862",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The contract architecture is clean and focused. It stores mappings for price feeds and base units indexed by asset symbols, implements the `IOracleOperator` interface, and includes custom errors for precise error handling.",
+      "file": "malda-lending/src/oracles/ChainlinkOracle.sol",
+      "highlight": [
+        {
+          "start": 26,
+          "end": 34
+        }
+      ],
+      "title": "",
+      "id": "70863",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `getPrice` function retrieves the current USD price for an mToken. Notice how it normalizes the price to 18 decimals on line 57, ensuring consistent formatting across the protocol regardless of the feed's native decimals.",
+      "file": "malda-lending/src/oracles/ChainlinkOracle.sol",
+      "highlight": [
+        {
+          "start": 51,
+          "end": 58
+        }
+      ],
+      "title": "",
+      "id": "70864",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `getUnderlyingPrice` function is specifically designed for the `Operator` contract's needs. Line 68 shows how it scales the price by base units and adjusts decimals to 36 total decimals, which is the expected format for collateral calculations.",
+      "file": "malda-lending/src/oracles/ChainlinkOracle.sol",
+      "highlight": [
+        {
+          "start": 63,
+          "end": 69
+        }
+      ],
+      "title": "",
+      "id": "70865",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The internal `_getLatestPrice` function handles the actual Chainlink interaction. It calls `latestRoundData()`, validates that the price is positive (line 83), and returns both the price and timestamp for potential staleness checks.",
+      "file": "malda-lending/src/oracles/ChainlinkOracle.sol",
+      "highlight": [
+        {
+          "start": 72,
+          "end": 87
+        }
+      ],
+      "title": "",
+      "id": "70866",
+      "hideAreas": []
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/oracles/MixedPriceOracleV3.sol"
+      ],
+      "description": "The `MixedPriceOracleV3` represents a significant evolution in oracle design. It adds resilience through staleness checks and configurable price sources, making it suitable for production environments where price freshness is critical.",
+      "title": "",
+      "id": "70867",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "This oracle introduces several **key safety features**: an immutable `STALENESS_PERIOD` to reject old prices, configurable price sources per symbol, and role-based access control through the `IRoles` interface for administrative functions.",
+      "file": "malda-lending/src/oracles/MixedPriceOracleV3.sol",
+      "highlight": [
+        {
+          "start": 20,
+          "end": 35
+        }
+      ],
+      "title": "",
+      "id": "70868",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `_getPriceUSD` function demonstrates sophisticated price conversion logic. **Lines 88-90** show how it can chain price conversions - if an asset isn't priced in USD directly, it fetches the intermediate currency's USD price recursively.",
+      "file": "malda-lending/src/oracles/MixedPriceOracleV3.sol",
+      "highlight": [
+        {
+          "start": 83,
+          "end": 93
+        }
+      ],
+      "title": "",
+      "id": "70869",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `_getLatestPrice` function adds staleness validation. **Line 109** ensures that the price was updated recently enough by comparing the update timestamp against the current block time and staleness threshold.",
+      "file": "malda-lending/src/oracles/MixedPriceOracleV3.sol",
+      "highlight": [
+        {
+          "start": 95,
+          "end": 115
+        }
+      ],
+      "title": "",
+      "id": "70870",
+      "hideAreas": []
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/oracles/MixedPriceOracleV4.sol"
+      ],
+      "description": "The `MixedPriceOracleV4` represents the pinnacle of oracle sophistication in Malda. It builds upon `V3` with dual price source validation and intelligent fallback mechanisms using both `API3` and `eOracle` feeds.",
+      "title": "",
+      "id": "70871",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "V4 introduces a `PriceConfig` struct requiring both `API3` and `eOracle` feeds for redundancy. The `maxPriceDelta` (line 35) and per-symbol delta overrides help detect when price sources diverge beyond acceptable thresholds.",
+      "file": "malda-lending/src/oracles/MixedPriceOracleV4.sol",
+      "highlight": [
+        {
+          "start": 24,
+          "end": 37
+        }
+      ],
+      "title": "",
+      "id": "70872",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The core validation logic fetches prices from both sources simultaneously. Lines 146-147 calculate the percentage difference between feeds, while lines 149-152 allow per-symbol delta customization for assets with different volatility profiles.",
+      "file": "malda-lending/src/oracles/MixedPriceOracleV4.sol",
+      "highlight": [
+        {
+          "start": 137,
+          "end": 152
+        }
+      ],
+      "title": "",
+      "id": "70873",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The intelligent fallback mechanism prioritizes `API3` but switches to `eOracle` when needed. If `API3` is stale or the price delta exceeds thresholds (line 156), it uses `eOracle` as the fallback source, ensuring continuous price availability.",
+      "file": "malda-lending/src/oracles/MixedPriceOracleV4.sol",
+      "highlight": [
+        {
+          "start": 154,
+          "end": 167
+        }
+      ],
+      "title": "",
+      "id": "70874",
+      "hideAreas": []
+    },
+    {
+      "type": "mcq",
+      "description": "In `MixedPriceOracleV4`, the `_getLatestPrice` function evaluates two conditions: the freshness of the `api3Feed` and the price delta between `api3Feed` and `eOracleFeed`. If the `api3Feed` price is stale, but the `eOracleFeed` is fresh and the price delta is *below* the configured threshold, what is the outcome?\n\nOptions:\n\n A). The function will return the price from `api3Feed` because the price delta is acceptable.\n\nB). The function will return the price from `eOracleFeed` after verifying it is not stale.\n\nC). The function will revert with `MixedPriceOracle_ApiV3StalePrice()` because the primary feed failed the freshness check.\n\nD). The function will average the prices from both feeds to ensure accuracy.\n\n\nCorrect: B). The function will return the price from `eOracleFeed` after verifying it is not stale.\n\nExplanation: The correct answer is that the function returns the `eOracleFeed` price. The logic in `_getLatestPrice` (line 156) uses an OR condition: `if (!apiV3Fresh || deltaBps > deltaSymbol)`. Since the API3 feed is stale (`!apiV3Fresh` is true), the condition is met, and the contract falls back to the `eOracleFeed`, provided it is also fresh. It does not revert unless the fallback eOracle feed is also stale.",
+      "title": "",
+      "id": "70882",
+      "text": "In `MixedPriceOracleV4`, the `_getLatestPrice` function evaluates two conditions: the freshness of the `api3Feed` and the price delta between `api3Feed` and `eOracleFeed`. If the `api3Feed` price is stale, but the `eOracleFeed` is fresh and the price delta is *below* the configured threshold, what is the outcome?",
+      "answers": [
+        "The function will return the price from `api3Feed` because the price delta is acceptable.",
+        "The function will return the price from `eOracleFeed` after verifying it is not stale.",
+        "The function will revert with `MixedPriceOracle_ApiV3StalePrice()` because the primary feed failed the freshness check.",
+        "The function will average the prices from both feeds to ensure accuracy."
+      ],
+      "correct": 1,
+      "explanation": "The correct answer is that the function returns the `eOracleFeed` price. The logic in `_getLatestPrice` (line 156) uses an OR condition: `if (!apiV3Fresh || deltaBps > deltaSymbol)`. Since the API3 feed is stale (`!apiV3Fresh` is true), the condition is met, and the contract falls back to the `eOracleFeed`, provided it is also fresh. It does not revert unless the fallback eOracle feed is also stale."
+    },
+    {
+      "type": "textOnly",
+      "description": "Now let's explore the **gas helper system**. This component enables **cross-chain oracle interactions** by providing **standardized gas fee calculations**. When oracle data needs to be transmitted across different blockchain networks, these helpers ensure proper gas allocation for successful cross-chain transactions.",
+      "title": "",
+      "id": "70875"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/interfaces/IGasFeesHelper.sol"
+      ],
+      "description": "The `IGasFeesHelper` interface defines a simple but critical abstraction for gas fee calculations across different blockchain networks, forming the foundation for cross-chain oracle operations.",
+      "title": "",
+      "id": "70876",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `interface` requires a single `function` that maps `chain IDs` to `gas fees`. This abstraction allows different gas calculation strategies to be implemented and swapped as needed, supporting oracle price data transmission across **Malda**'s multi-chain architecture.",
+      "file": "malda-lending/src/interfaces/IGasFeesHelper.sol",
+      "highlight": [
+        {
+          "start": 26,
+          "end": 28
+        }
+      ],
+      "title": "",
+      "id": "70877",
+      "hideAreas": []
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/oracles/gas/DefaultGasHelper.sol"
+      ],
+      "description": "The `DefaultGasHelper` provides a concrete implementation of the gas fees interface with administrative controls for dynamic fee updates as network conditions change across different chains.",
+      "title": "",
+      "id": "70878",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "This implementation uses a straightforward mapping from chain IDs to gas amounts. The `setGasFee` function allows the owner to update fees as network conditions change, with events emitted for transparency and off-chain monitoring of cross-chain gas costs.",
+      "file": "malda-lending/src/oracles/gas/DefaultGasHelper.sol",
+      "highlight": [
+        {
+          "start": 24,
+          "end": 42
+        }
+      ],
+      "title": "",
+      "id": "70879",
+      "hideAreas": []
+    },
+    {
+      "type": "textOnly",
+      "description": "To conclude, Malda's oracle architecture is structured to provide different levels of price validation and operational choice. `ChainlinkOracle` is designed for basic use cases, `MixedPriceOracleV3` adds staleness protection, and `MixedPriceOracleV4` provides dual-source validation. The `gas helper system` enables cross-chain oracle interactions by managing transaction costs across different networks. This tiered approach allows developers to select an oracle implementation based on the specific requirements of a deployment scenario.",
+      "title": "",
+      "id": "70880"
+    }
+  ]
+}

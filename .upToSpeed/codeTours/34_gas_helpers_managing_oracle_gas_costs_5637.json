@@ -1,0 +1,166 @@
+{
+  "title": "3.4: Gas Helpers: Managing Oracle Gas Costs",
+  "id": "ZNem+KtDQaEIzoAdmUgwjlT0P6Ko5tUEh9julMHNk14=",
+  "originalId": 5637,
+  "position": 9,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Welcome to this walkthrough of the protocol's gas fee management system. We'll explore how the system calculates and manages gas costs for cross-chain operations that may involve oracle updates. **Important note**: The query references variables like `gasUsage`, `gasPrice`, and `premium`, but the actual implementation uses a simpler fixed-fee approach.",
+      "title": "",
+      "id": "70781"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/interfaces/IGasFeesHelper.sol"
+      ],
+      "description": "The `IGasFeesHelper` interface defines the standard contract for calculating gas fees within the protocol. This interface establishes the foundation for gas fee calculations across oracle and cross-chain operations.",
+      "title": "",
+      "id": "70782",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The interface defines exactly **one function** called `gasFees` (not `getGasFee` as mentioned in the query). This function takes a destination chain ID and returns the corresponding gas fee amount, demonstrating the interface's singular focus on gas cost retrieval.",
+      "file": "malda-lending/src/interfaces/IGasFeesHelper.sol",
+      "highlight": [
+        {
+          "start": 26,
+          "end": 28
+        }
+      ],
+      "title": "",
+      "id": "70783",
+      "hideAreas": []
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/oracles/gas/DefaultGasHelper.sol"
+      ],
+      "description": "The **`DefaultGasHelper`** contract is the **default implementation of gas fee management**. Instead of using complex calculation variables, this implementation retrieves a pre-configured gas fee for each destination chain from a mapping.",
+      "title": "",
+      "id": "70784",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The core of the gas fee **calculation logic** is this single mapping. There are no `gasUsage`, `gasPrice`, or `premium` variables—just a direct lookup. Solidity automatically generates a `gasFees(uint32) external view returns (uint256)` getter function that matches the interface.",
+      "file": "malda-lending/src/oracles/gas/DefaultGasHelper.sol",
+      "highlight": [
+        {
+          "start": 26,
+          "end": 26
+        }
+      ],
+      "title": "",
+      "id": "70785",
+      "hideAreas": []
+    },
+    {
+      "type": "mcq",
+      "description": "How does the `DefaultGasHelper` contract correctly implement the `IGasFeesHelper` interface, which requires a `gasFees(uint32) external view` function?\n\nOptions:\n\n A). It implements an explicit `gasFees` function that reads from a private mapping.\n\nB). It declares a `public` mapping named `gasFees`, for which Solidity automatically creates a getter function matching the interface.\n\nC). It uses an `immutable` mapping, which is assigned in the constructor and has an implicit public getter.\n\n\nCorrect: B). It declares a `public` mapping named `gasFees`, for which Solidity automatically creates a getter function matching the interface.\n\nExplanation: The `DefaultGasHelper` contract does not contain an explicit function named `gasFees`. Instead, it declares a `public` state variable: `mapping(uint32 => uint256) public gasFees;`. Solidity automatically generates a public getter function for this variable with a signature that matches the `IGasFeesHelper` interface, providing a concise and gas-efficient implementation. The mapping cannot be `immutable` because the `setGasFee` function allows its values to be changed after deployment.",
+      "title": "",
+      "id": "70793",
+      "text": "How does the `DefaultGasHelper` contract correctly implement the `IGasFeesHelper` interface, which requires a `gasFees(uint32) external view` function?",
+      "answers": [
+        "It implements an explicit `gasFees` function that reads from a private mapping.",
+        "It declares a `public` mapping named `gasFees`, for which Solidity automatically creates a getter function matching the interface.",
+        "It uses an `immutable` mapping, which is assigned in the constructor and has an implicit public getter."
+      ],
+      "correct": 1,
+      "explanation": "The `DefaultGasHelper` contract does not contain an explicit function named `gasFees`. Instead, it declares a `public` state variable: `mapping(uint32 => uint256) public gasFees;`. Solidity automatically generates a public getter function for this variable with a signature that matches the `IGasFeesHelper` interface, providing a concise and gas-efficient implementation. The mapping cannot be `immutable` because the `setGasFee` function allows its values to be changed after deployment."
+    },
+    {
+      "type": "highlight",
+      "description": "The **administrative function** for updating gas fees is `setGasFee`. This is the only mechanism for adjusting gas costs—no dynamic calculations based on network conditions or usage patterns. Each update emits a `GasFeeUpdated` event for transparency.",
+      "file": "malda-lending/src/oracles/gas/DefaultGasHelper.sol",
+      "highlight": [
+        {
+          "start": 39,
+          "end": 42
+        }
+      ],
+      "title": "",
+      "id": "70786",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "Here we see the **predetermined gas fee amounts** in practice. `Ethereum` (chain 1) costs `3.5 ETH` in `wei`, while `Base` (8453) costs much less. These fixed values reflect real-world gas costs but are manually set rather than dynamically calculated.",
+      "file": "malda-lending/script/configuration/SetGasFees.s.sol",
+      "highlight": [
+        {
+          "start": 18,
+          "end": 22
+        }
+      ],
+      "title": "",
+      "id": "70787",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The protocol integrates gas helpers through this **interface-based design**. The `mErc20Host` stores an `IGasFeesHelper` instance, allowing different implementations while maintaining consistent access patterns for oracle operations.",
+      "file": "malda-lending/src/mToken/host/mErc20Host.sol",
+      "highlight": [
+        {
+          "start": 69,
+          "end": 69
+        }
+      ],
+      "title": "",
+      "id": "70788",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "Administrators can **configure the gas helper** implementation through `setGasHelper`. The type casting confirms that `DefaultGasHelper` successfully implements the interface via its auto-generated getter function.",
+      "file": "malda-lending/src/mToken/host/mErc20Host.sol",
+      "highlight": [
+        {
+          "start": 159,
+          "end": 162
+        }
+      ],
+      "title": "",
+      "id": "70789",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The **gas fee retrieval logic** in `_getGasFees` safely handles unset helpers and performs the simple lookup. This is where the **calculation** happens—a direct call to the mapping-based interface method.",
+      "file": "malda-lending/src/mToken/host/mErc20Host.sol",
+      "highlight": [
+        {
+          "start": 353,
+          "end": 357
+        }
+      ],
+      "title": "",
+      "id": "70790",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The **enforcement mechanism** ensures users pay sufficient gas fees for cross-chain operations. Line 62 shows the actual gas fee calculation—a simple `interface call`, not complex formula involving usage or pricing variables.",
+      "file": "malda-lending/src/libraries/CommonLib.sol",
+      "highlight": [
+        {
+          "start": 62,
+          "end": 64
+        }
+      ],
+      "title": "",
+      "id": "70791",
+      "hideAreas": []
+    },
+    {
+      "type": "textOnly",
+      "description": "**Summary**: The gas fee system uses fixed amounts per chain rather than dynamic calculations with `gasUsage`, `gasPrice`, or `premium`. This design prioritizes predictability and simplicity over real-time pricing, with manual administrative updates to reflect changing network conditions.",
+      "title": "",
+      "id": "70792"
+    }
+  ]
+}

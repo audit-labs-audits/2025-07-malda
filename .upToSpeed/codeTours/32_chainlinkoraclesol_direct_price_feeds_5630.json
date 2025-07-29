@@ -1,0 +1,147 @@
+{
+  "title": "3.2: ChainlinkOracle.sol: Direct Price Feeds",
+  "id": "24642bu2+qF9MCUoy9QdbvD19nEVjSSfotAnGI7aeOA=",
+  "originalId": 5630,
+  "position": 7,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Welcome to this tour of `ChainlinkOracle.sol`, the most direct way the protocol fetches asset prices. This contract provides a simple, reliable bridge between `Chainlink price feeds` and the lending protocol.",
+      "title": "",
+      "id": "70637"
+    },
+    {
+      "type": "highlight",
+      "description": "The `ChainlinkOracle` implements the `IOracleOperator` interface, making it compatible with the protocol's oracle system. It uses two key mappings: `priceFeeds` connects token symbols to Chainlink aggregators, while `baseUnits` handles decimal conversions for different tokens.",
+      "file": "malda-lending/src/oracles/ChainlinkOracle.sol",
+      "highlight": [
+        {
+          "start": 26,
+          "end": 34
+        }
+      ],
+      "title": "",
+      "id": "70638",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "Here's the core `getUnderlyingPrice` function that takes an `mToken` address and returns the price of its underlying asset. This is the heart of the oracle's functionality.",
+      "file": "malda-lending/src/oracles/ChainlinkOracle.sol",
+      "highlight": [
+        {
+          "start": 63,
+          "end": 69
+        }
+      ],
+      "title": "",
+      "id": "70639",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "Step 1: Extract the symbol from the underlying token (not the `mToken` itself). This gets us the actual asset symbol like `USDC` or `WETH` that we need to look up in our price feeds.",
+      "file": "malda-lending/src/oracles/ChainlinkOracle.sol",
+      "highlight": [
+        {
+          "start": 64,
+          "end": 64
+        }
+      ],
+      "title": "",
+      "id": "70640",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "Step 2: Get the **decimal precision** of the `Chainlink price feed`. Different feeds return prices with different **decimal places** (usually 8), so we need this for proper scaling.",
+      "file": "malda-lending/src/oracles/ChainlinkOracle.sol",
+      "highlight": [
+        {
+          "start": 65,
+          "end": 65
+        }
+      ],
+      "title": "",
+      "id": "70641",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "Step 3: Fetch the latest price from `Chainlink` and adjust it for decimals. The formula ensures all prices are returned in a standardized 18-decimal format, accounting for both the feed's decimals and the token's base units.",
+      "file": "malda-lending/src/oracles/ChainlinkOracle.sol",
+      "highlight": [
+        {
+          "start": 67,
+          "end": 68
+        }
+      ],
+      "title": "",
+      "id": "70642",
+      "hideAreas": []
+    },
+    {
+      "type": "mcq",
+      "description": "In `getUnderlyingPrice`, what is the purpose of the calculation on line 68: `(price * (10 ** (36 - feedDecimals))) / baseUnits[symbol]`?\n\nOptions:\n\n A). To convert the asset's price into WETH before returning it.\n\nB). To standardize the price to a fixed 18-decimal precision for protocol-wide consistency.\n\nC). To account only for the base units of the underlying token, ignoring the feed's precision.\n\nD). To apply a slippage tolerance factor to the raw price from the Chainlink feed.\n\n\nCorrect: B). To standardize the price to a fixed 18-decimal precision for protocol-wide consistency.\n\nExplanation: The correct answer is B. The formula `(price * (10 ** (36 - feedDecimals))) / baseUnits[symbol]` is designed to normalize the price into a standard 18-decimal format. It accounts for both the Chainlink feed's native decimals (`feedDecimals`) and the underlying token's own decimals (represented by `baseUnits`), ensuring that all asset prices are comparable within the system.",
+      "title": "",
+      "id": "70647",
+      "text": "In `getUnderlyingPrice`, what is the purpose of the calculation on line 68: `(price * (10 ** (36 - feedDecimals))) / baseUnits[symbol]`?",
+      "answers": [
+        "To convert the asset's price into WETH before returning it.",
+        "To standardize the price to a fixed 18-decimal precision for protocol-wide consistency.",
+        "To account only for the base units of the underlying token, ignoring the feed's precision.",
+        "To apply a slippage tolerance factor to the raw price from the Chainlink feed."
+      ],
+      "correct": 1,
+      "explanation": "The correct answer is B. The formula `(price * (10 ** (36 - feedDecimals))) / baseUnits[symbol]` is designed to normalize the price into a standard 18-decimal format. It accounts for both the Chainlink feed's native decimals (`feedDecimals`) and the underlying token's own decimals (represented by `baseUnits`), ensuring that all asset prices are comparable within the system."
+    },
+    {
+      "type": "highlight",
+      "description": "The **constructor** configures the **oracle** by mapping `token symbols` to their `Chainlink price feeds` and `base units`. It takes parallel arrays and populates both `storage mappings` efficiently in a **single loop**.",
+      "file": "malda-lending/src/oracles/ChainlinkOracle.sol",
+      "highlight": [
+        {
+          "start": 36,
+          "end": 45
+        }
+      ],
+      "title": "",
+      "id": "70643",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The **oracle** includes error handling. Before fetching any price, it checks that a **price feed** actually exists for the requested token symbol, preventing operations on unsupported assets.",
+      "file": "malda-lending/src/oracles/ChainlinkOracle.sol",
+      "highlight": [
+        {
+          "start": 72,
+          "end": 73
+        }
+      ],
+      "title": "",
+      "id": "70644",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "Additional safety: the oracle verifies that `Chainlink` returns a positive price, protecting against edge cases where the feed might return zero during network issues.",
+      "file": "malda-lending/src/oracles/ChainlinkOracle.sol",
+      "highlight": [
+        {
+          "start": 83,
+          "end": 83
+        }
+      ],
+      "title": "",
+      "id": "70645",
+      "hideAreas": []
+    },
+    {
+      "type": "textOnly",
+      "description": "The `ChainlinkOracle` acts as a direct conduit from Chainlink to the protocol. Its implementation features minimal processing, error handling, and standardized output formatting.",
+      "title": "",
+      "id": "70646"
+    }
+  ]
+}

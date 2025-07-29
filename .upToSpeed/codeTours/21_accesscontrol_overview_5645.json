@@ -1,0 +1,293 @@
+{
+  "title": "2.1: AccessControl: Overview",
+  "id": "AacuDgQgG6iSROmBzPbCyHZOvXgghS9H1EaXLOzwMbM=",
+  "originalId": 5645,
+  "position": 2,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Welcome to the **Malda Protocol's Access Control System**. This comprehensive walkthrough will guide you through the three core access control contracts and demonstrate how they work together to secure protocol operations through role-based permissions, address blacklisting, and emergency pausing capabilities.",
+      "title": "",
+      "id": "70741"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/Roles.sol"
+      ],
+      "description": "The **`Roles`** contract serves as the foundation of Malda's role-based access control (**RBAC**) system. This contract manages permissions across the entire protocol by assigning specific roles to addresses that can then perform authorized actions.",
+      "title": "",
+      "id": "70742",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The core storage uses a nested mapping to track which addresses have which roles. Lines 35-48 define the different role constants used throughout the protocol. Each role grants specific permissions: `REBALANCER` allows cross-chain asset rebalancing, `PAUSE_MANAGER` enables emergency protocol pausing, `GUARDIAN_BLACKLIST` permits blacklisting addresses, and various `GUARDIAN_*` roles control different protocol parameters.",
+      "file": "malda-lending/src/Roles.sol",
+      "highlight": [
+        {
+          "start": 33,
+          "end": 48
+        }
+      ],
+      "title": "",
+      "id": "70743",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The main functionality consists of two key functions: `isAllowedFor` checks if a contract has a specific role, while `allowFor` (owner-only) grants or revokes roles. This mechanism allows for flexible permission management across the protocol.",
+      "file": "malda-lending/src/Roles.sol",
+      "highlight": [
+        {
+          "start": 58,
+          "end": 73
+        }
+      ],
+      "title": "",
+      "id": "70744",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "Here's how the **Roles system** is used in practice. The `_onlyAdminOrRole` modifier demonstrates a common access control pattern in the protocol - allowing either the admin or any address with a specific role to perform an action. This provides both centralized admin control and distributed role-based permissions.",
+      "file": "malda-lending/src/mToken/host/mErc20Host.sol",
+      "highlight": [
+        {
+          "start": 321,
+          "end": 325
+        }
+      ],
+      "title": "",
+      "id": "70745",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "A concrete example of **role-based access control** in action: the `extractForRebalancing` function checks if the caller has the `REBALANCER` role before allowing them to extract tokens for cross-chain rebalancing operations. This ensures only authorized rebalancing contracts can move protocol funds.",
+      "file": "malda-lending/src/mToken/host/mErc20Host.sol",
+      "highlight": [
+        {
+          "start": 139,
+          "end": 144
+        }
+      ],
+      "title": "",
+      "id": "70746",
+      "hideAreas": []
+    },
+    {
+      "type": "mcq",
+      "description": "In `mErc20Host.sol`, what is the specific access control requirement for successfully calling the `extractForRebalancing` function?\n\nOptions:\n\n A). The caller must be the `admin` or have the `REBALANCER` role.\n\nB). The caller must have the `REBALANCER` role.\n\nC). The caller must have the `GUARDIAN_PAUSE` role.\n\nD). The caller must be the contract's `admin`.\n\n\nCorrect: B). The caller must have the `REBALANCER` role.\n\nExplanation: The correct answer is that the caller must have the `REBALANCER` role. The function's logic on line 142 of `mErc20Host.sol` explicitly checks `if (!_isAllowedFor(msg.sender, rolesOperator.REBALANCER()))`. This is the only authorization check performed. While the `_onlyAdminOrRole` modifier exists in the contract, it is not applied to this specific function. The `GUARDIAN_PAUSE` role is for pausing, not rebalancing.",
+      "title": "",
+      "id": "70763",
+      "text": "In `mErc20Host.sol`, what is the specific access control requirement for successfully calling the `extractForRebalancing` function?",
+      "answers": [
+        "The caller must be the `admin` or have the `REBALANCER` role.",
+        "The caller must have the `REBALANCER` role.",
+        "The caller must have the `GUARDIAN_PAUSE` role.",
+        "The caller must be the contract's `admin`."
+      ],
+      "correct": 1,
+      "explanation": "The correct answer is that the caller must have the `REBALANCER` role. The function's logic on line 142 of `mErc20Host.sol` explicitly checks `if (!_isAllowedFor(msg.sender, rolesOperator.REBALANCER()))`. This is the only authorization check performed. While the `_onlyAdminOrRole` modifier exists in the contract, it is not applied to this specific function. The `GUARDIAN_PAUSE` role is for pausing, not rebalancing."
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/blacklister/Blacklister.sol"
+      ],
+      "description": "The `Blacklister` contract provides a mechanism to prevent specific addresses from interacting with the protocol. This is used for compliance and security, allowing for the immediate blocking of problematic addresses while maintaining protocol operations for legitimate users.",
+      "title": "",
+      "id": "70747",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The contract maintains a **mapping** of blacklisted addresses for `O(1)` lookups and an **array** for enumeration. It also holds a reference to the `Roles` contract to enable guardian-level permissions for blacklisting operations, demonstrating the integration between access control components.",
+      "file": "malda-lending/src/blacklister/Blacklister.sol",
+      "highlight": [
+        {
+          "start": 29,
+          "end": 33
+        }
+      ],
+      "title": "",
+      "id": "70748",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `onlyOwnerOrGuardian` modifier shows the `Roles` system integration in practice. This allows both the contract owner and addresses with the `GUARDIAN_BLACKLIST` role to manage the blacklist, providing operational flexibility while maintaining security controls.",
+      "file": "malda-lending/src/blacklister/Blacklister.sol",
+      "highlight": [
+        {
+          "start": 53,
+          "end": 56
+        }
+      ],
+      "title": "",
+      "id": "70749",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The blacklisting functions provide immediate control over address access. The `blacklist` function adds addresses to the blocklist, while `unblacklist` removes them. Both emit events for transparency and off-chain monitoring. This system enables rapid response to security threats or compliance requirements.",
+      "file": "malda-lending/src/blacklister/Blacklister.sol",
+      "highlight": [
+        {
+          "start": 64,
+          "end": 74
+        }
+      ],
+      "title": "",
+      "id": "70750",
+      "hideAreas": []
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/pauser/Pauser.sol"
+      ],
+      "description": "The `Pauser` contract enables emergency halting of protocol operations. This is critical for responding to security incidents or other emergencies by immediately stopping specific operations or entire markets while allowing time for proper remediation.",
+      "title": "",
+      "id": "70751",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The contract maintains references to the `Roles` and `Operator` contracts, plus a registry of pausable contracts. Each contract can be classified as either a `Host` (main protocol) or `Extension` (gateway) type, which determines how pausing is implemented for that specific contract.",
+      "file": "malda-lending/src/pauser/Pauser.sol",
+      "highlight": [
+        {
+          "start": 38,
+          "end": 43
+        }
+      ],
+      "title": "",
+      "id": "70752",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The emergency pause functions provide flexible response capabilities. `emergencyPauseMarket` pauses all operations for a specific market, `emergencyPauseMarketFor` pauses specific operations (like minting or borrowing), and `emergencyPauseAll` halts the entire protocol. This granular control allows proportionate responses to different types of incidents.",
+      "file": "malda-lending/src/pauser/Pauser.sol",
+      "highlight": [
+        {
+          "start": 85,
+          "end": 109
+        }
+      ],
+      "title": "",
+      "id": "70753",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `_pause` function demonstrates role-based authorization and the actual pausing mechanism. Line 134 checks that the caller has the `PAUSE_MANAGER` role, then applies the appropriate pausing method - calling `operator.setPaused` for Host contracts or `ImTokenGateway.setPaused` for Extension contracts.",
+      "file": "malda-lending/src/pauser/Pauser.sol",
+      "highlight": [
+        {
+          "start": 133,
+          "end": 143
+        }
+      ],
+      "title": "",
+      "id": "70754",
+      "hideAreas": []
+    },
+    {
+      "type": "mcq",
+      "description": "An address holds the `GUARDIAN_PAUSE` role and successfully pauses a market. If this same address then attempts to unpause that market by calling `setPaused(mToken, type, false)` on the `Operator` contract, what is the expected outcome based on the implementation in `Operator.sol`?\n\nOptions:\n\n A). The transaction will succeed, as the `GUARDIAN_PAUSE` role grants permissions for both pausing and unpausing.\n\nB). The transaction will revert because `Operator.sol` explicitly restricts unpausing to the contract owner.\n\nC). The transaction will succeed, because the permission check in `Operator.sol` is only applied when setting the paused state to `true`.\n\n\nCorrect: B). The transaction will revert because `Operator.sol` explicitly restricts unpausing to the contract owner.\n\nExplanation: This is a good observation. The implementation in `Operator.sol` (lines 312-315) creates an intentional asymmetry. While an address with the `GUARDIAN_PAUSE` role (or the owner) can pause the system (`state` is `true`), only the owner can unpause it (`state` is `false`). This prevents a potentially compromised guardian key from unilaterally resuming protocol operations after an incident.",
+      "title": "",
+      "id": "70764",
+      "text": "An address holds the `GUARDIAN_PAUSE` role and successfully pauses a market. If this same address then attempts to unpause that market by calling `setPaused(mToken, type, false)` on the `Operator` contract, what is the expected outcome based on the implementation in `Operator.sol`?",
+      "answers": [
+        "The transaction will succeed, as the `GUARDIAN_PAUSE` role grants permissions for both pausing and unpausing.",
+        "The transaction will revert because `Operator.sol` explicitly restricts unpausing to the contract owner.",
+        "The transaction will succeed, because the permission check in `Operator.sol` is only applied when setting the paused state to `true`."
+      ],
+      "correct": 1,
+      "explanation": "This is a good observation. The implementation in `Operator.sol` (lines 312-315) creates an intentional asymmetry. While an address with the `GUARDIAN_PAUSE` role (or the owner) can pause the system (`state` is `true`), only the owner can unpause it (`state` is `false`). This prevents a potentially compromised guardian key from unilaterally resuming protocol operations after an incident."
+    },
+    {
+      "type": "highlight",
+      "description": "Here's how the **pausing mechanism** actually works in the `Operator` contract. The `setPaused` function can pause specific operations on markets. Notice the **asymmetric permissions**: both admin and `GUARDIAN_PAUSE` role holders can pause operations (`line 310`), but only the admin can unpause (`line 315`), preventing unauthorized restoration of services.",
+      "file": "malda-lending/src/Operator/Operator.sol",
+      "highlight": [
+        {
+          "start": 307,
+          "end": 320
+        }
+      ],
+      "title": "",
+      "id": "70755",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The bridge system demonstrates advanced role usage. The `onlyBridgeConfigurator` modifier allows `GUARDIAN_BRIDGE` role holders to configure bridge settings, while `onlyRebalancer` restricts actual rebalancing operations to addresses with the `REBALANCER` role. This separation of configuration and operational permissions enhances security.",
+      "file": "malda-lending/src/rebalancer/bridges/BaseBridge.sol",
+      "highlight": [
+        {
+          "start": 40,
+          "end": 48
+        }
+      ],
+      "title": "",
+      "id": "70756",
+      "hideAreas": []
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/interfaces/IRoles.sol"
+      ],
+      "description": "The **`IRoles`** interface defines the public functions for the **`Roles`** contract. This interface exposes all the role constants and the key `isAllowedFor` function that other contracts use to check permissions. The interface pattern ensures consistent access control across the protocol.",
+      "title": "",
+      "id": "70757",
+      "hideAreas": []
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/interfaces/IBlacklister.sol"
+      ],
+      "description": "The **`IBlacklister`** interface provides the **public API** for blacklist management, including functions to check blacklist status, add/remove addresses, and retrieve the complete blacklist. This standardized interface enables consistent blacklist checking across protocol components.",
+      "title": "",
+      "id": "70758",
+      "hideAreas": []
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/interfaces/IPauser.sol"
+      ],
+      "description": "The `IPauser` interface defines the emergency pause functionality, including the different pausable contract types and the various pause operations available to authorized users. The interface standardizes emergency response capabilities across the protocol.",
+      "title": "",
+      "id": "70759",
+      "hideAreas": []
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/interfaces/IOwnable.sol"
+      ],
+      "description": "The **`IOwnable`** interface provides a simple ownership transfer function used by various contracts in the system for ownership management, complementing the role-based access control system with basic ownership controls.",
+      "title": "",
+      "id": "70760",
+      "hideAreas": []
+    },
+    {
+      "type": "textOnly",
+      "description": "Access Control in Practice: During normal operations, users interact with `mToken` contracts which check permissions through the `Roles` system. For emergencies, `PAUSE_MANAGER` role holders can immediately halt operations via the `Pauser` contract. The `Blacklister` prevents specified addresses from participating, while `GUARDIAN_*` roles enable parameter adjustments without full admin privileges. This layered approach separates responsibilities into distinct roles for system management and security.",
+      "title": "",
+      "id": "70761"
+    },
+    {
+      "type": "textOnly",
+      "description": "The `Malda Protocol`'s access control system combines several features: **role-based permissions** enable distributed governance, **blacklisting** provides a mechanism for threat response, **emergency pausing** offers circuit breaker functionality, and **standardized interfaces** ensure consistent implementation. This system is designed to balance operational efficiency with security controls.",
+      "title": "",
+      "id": "70762"
+    }
+  ]
+}

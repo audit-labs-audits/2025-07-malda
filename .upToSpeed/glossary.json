@@ -1,0 +1,333 @@
+[
+  {
+    "terms": [
+      "Liquidity Provider"
+    ],
+    "definition": "# Liquidity Provider\n\nA participant who supplies assets (like USDC, wETH, wBTC) to Malda's lending markets in exchange for mTokens representing their share of the pool. Liquidity providers earn interest based on borrower activity and MALDA token rewards distributed through the protocol's reward mechanisms. When providing liquidity, users can \"enter markets\" to enable their deposits as collateral, which allows them to borrow against their positions. The protocol tracks liquidity across chains, manages supply caps, and allows for rebalancing to optimize capital efficiency. Liquidity providers can withdraw their assets plus accrued interest at any time, subject to protocol liquidity constraints and market conditions."
+  },
+  {
+    "terms": [
+      "Volatility"
+    ],
+    "definition": "# Volatility\n\nIn software engineering and financial protocols, volatility refers to the magnitude and frequency of price fluctuations of assets over time. In the Malda lending protocol specifically, volatility represents a critical risk factor that directly impacts collateral valuation, liquidation thresholds, and overall system stability.\n\nThe codebase addresses volatility through several mechanisms:\n\n1. **Price delta limits** - The `MixedPriceOracleV4` contract implements maximum acceptable price changes (`deltaPerSymbol`) to protect against extreme short-term price movements:\n\n```solidity\noracle.setSymbolMaxPriceDelta(400, \"MOCK\");\n```\n\n2. **Interest rate models** - The `JumpRateModelV4` uses configurable parameters like `kink`, `baseRatePerYear`, and `jumpMultiplierPerYear` that can be tuned to account for different asset volatility profiles, charging higher rates for more volatile assets.\n\n3. **Time-weighted averaging** - Oracles often implement price averaging over multiple blocks to smooth out short-term volatility while preserving longer-term price trends.\n\nHigh volatility increases liquidation risks, potentially threatening protocol solvency if collateral values drop faster than liquidation mechanisms can respond. Managing volatility properly is essential for maintaining a stable lending environment across multiple chains and assets with varying risk profiles."
+  },
+  {
+    "terms": [
+      "Arbitrage"
+    ],
+    "definition": "# Arbitrage\n\nIn the Malda Protocol, arbitrage refers to the practice of exploiting price or liquidity differences for the same assets across different blockchain networks to generate profit or maintain protocol stability. As a cross-chain lending platform operating across multiple networks (Ethereum, Base, Linea, Optimism, etc.), the protocol naturally creates environments where the same token might have different effective prices or liquidity levels on different chains.\n\nThe protocol addresses arbitrage through two primary mechanisms:\n\n1. **Rebalancer**: A semi-trusted centralized component that monitors liquidity imbalances across chains and executes rebalancing operations using various bridges (Across, Everclear, etc.). This proactively minimizes arbitrage opportunities that could be exploited externally.\n\n2. **External Liquidators**: Similar to other lending protocols, these actors can profitably liquidate under-collateralized positions, which is a form of risk-arbitrage.\n\nArbitrage serves a crucial function in the Malda ecosystem - it helps maintain price equilibrium across chains, ensures capital efficiency, and creates market discipline. Without these mechanisms, users on different chains might experience significantly different lending/borrowing rates or collateral requirements for the same assets, undermining the protocol's value proposition of unified cross-chain liquidity."
+  },
+  {
+    "terms": [
+      "Slippage"
+    ],
+    "definition": "# Slippage\n\nSlippage in cross-chain protocols refers to the difference between the expected token amount (input) and the actual amount received (output) when bridging assets between blockchains. In the Malda protocol, slippage is strictly controlled via the `maxSlippage` parameter in the `AcrossBridge` contract, which defines the maximum acceptable percentage difference between these amounts.\n\nWhen users or the protocol rebalancer initiate a cross-chain transfer, the system calculates:\n```solidity\nmaxSlippageInputAmount = inputAmount * maxSlippage / SLIPPAGE_PRECISION\n```\n\nIf the actual difference exceeds this threshold (`inputAmount - outputAmount > maxSlippageInputAmount`), the transaction reverts with `AcrossBridge_SlippageNotValid()`. This mechanism protects users from receiving significantly fewer tokens than expected due to price movements, liquidity fluctuations, or delays in cross-chain execution.\n\nThe `SLIPPAGE_PRECISION` constant (set to 1e5) standardizes the slippage value to basis points, making it similar to percentage expressions commonly used in DeFi interfaces."
+  },
+  {
+    "terms": [
+      "Spread"
+    ],
+    "definition": "# Spread\n\nIn the context of lending protocols like Malda, \"spread\" typically refers to the difference between interest rates - specifically the gap between what borrowers pay and what lenders receive. This difference creates a margin that supports protocol operations and reserves. While not explicitly defined as a technical parameter in Malda's codebase, the concept is operationalized through mechanisms like reserve factors and interest rate models. The protocol captures a portion of interest paid by borrowers (defined by the reserveFactor parameter) before distributing the remainder to suppliers, effectively creating a spread that builds protocol reserves while maintaining competitive rates for both sides of the lending market."
+  },
+  {
+    "terms": [
+      "Order Book"
+    ],
+    "definition": "# Order Book\n\nIn decentralized finance protocols, an Order Book is a trading mechanism that combines elements of traditional Central Limit Order Books (CLOBs) with Automated Market Maker (AMM) functionality. It serves as an architecture for matching buy and sell orders at specific prices while maintaining liquidity efficiency.\n\nUnlike pure AMMs which use mathematical formulas and liquidity pools to determine prices, an Order Book system allows traders to place limit orders at exact prices they're willing to buy or sell assets. This hybrid approach enables:\n\n1. On-chain limit orders that execute only when specified price conditions are met\n2. Dynamic fee structures that can adapt to market volatility\n3. Advanced trading strategies with precise entry and exit points\n4. MEV (Maximal Extractable Value) protection or capture for liquidity providers\n5. Capital efficiency improvements through targeted liquidity placement\n\nThe implementation typically involves customizable hooks or extension points in the protocol that can execute specialized logic during key moments of the trading process, such as pre-trade validation, price checking, or settlement."
+  },
+  {
+    "terms": [
+      "Market Depth"
+    ],
+    "definition": "# Market Depth\n\nIn the context of the Malda lending protocol, Market Depth refers to the available liquidity in an asset market (like mUSDCMock or mwstETHMock) and its ability to accommodate large transactions without significant price impacts. Unlike traditional exchanges with order books, depth here represents how well a specific asset pool can handle substantial deposits, withdrawals, borrowings, or liquidations without destabilizing the market or causing excessive price slippage.\n\nMarket depth is maintained through several mechanisms:\n\n1. **Rebalancer operations** - The protocol employs a dedicated Rebalancer role that monitors demand across chains and rebalances liquidity accordingly, ensuring sufficient depth where needed\n2. **Price oracle constraints** - Settings like `maxPriceDelta` and `symbolMaxPriceDelta` in the `MixedPriceOracleV4` help control how quickly prices can move, indirectly protecting market depth\n3. **Risk parameters** - Configuration values like `closeFactorMantissa` and `liquidationIncentiveMantissa` determine liquidation behaviors that can affect market stability during large position unwinding\n\nGreater market depth provides users with more favorable transaction execution and protects the protocol from manipulation or excessive volatility during periods of high activity."
+  },
+  {
+    "terms": [
+      "Limit Order"
+    ],
+    "definition": "# Limit Order\n\nIn decentralized finance (DeFi) protocols like Malda, a Limit Order is a mechanism that allows users to set up automatic token exchanges that only execute when market prices reach specific thresholds. Unlike traditional exchange limit orders, DeFi implementations typically work by creating single-sided liquidity positions within defined price ranges.\n\nWhen a user places a limit order, they:\n1. Deposit one token type (e.g., USDC)\n2. Specify a target price or price range\n3. Have their order automatically execute when the market price crosses into their specified range\n4. Potentially earn fees while their liquidity waits for the target price to be reached\n\nThe implementation in Malda's codebase includes outflow volume controls that prevent excessive order execution within time windows (`limitPerTimePeriod`, `outflowResetTimeWindow`), which protects against market manipulation while allowing legitimate trading activity. These limits are configurable by the protocol's administrators and measured in USD-equivalent value."
+  },
+  {
+    "terms": [
+      "Stop-Loss Order"
+    ],
+    "definition": "# Stop-Loss Order\n\nA Stop-Loss Order in decentralized exchanges is an automated trading mechanism that helps users limit potential losses by specifying a price threshold at which their position will automatically close. When the asset's price reaches this predefined threshold (as determined by oracles like `MixedPriceOracleV4`), the order triggers, executing a market sale of the asset or liquidation of the position.\n\nIn Malda's protocol, this functionality is supported through the interaction between price oracles, the operator system, and liquidation mechanics. The semi-trusted sequencer and liquidator roles monitor price conditions and can trigger the necessary transactions when stop-loss conditions are met. For example, when a collateralized position's value drops below the configured threshold, liquidation may be automatically triggered through the `LiquidationHelper` contract.\n\nUnlike limit orders which execute at a specific price or better, stop-loss orders convert to market orders as soon as the trigger price is hit, meaning they execute immediately regardless of further price movement. This provides users with a risk management tool that works automatically and on-chain, without requiring constant monitoring of positions.\n\nThe implementation leverages the protocol's pause and operation control mechanisms, where specific market operations can be triggered or halted based on price conditions, as seen in the `Pauser` contract's operation type controls."
+  },
+  {
+    "terms": [
+      "Maker Fee"
+    ],
+    "definition": "# Maker Fee\n\nIn decentralized finance protocols like Malda, the concept of a \"Maker Fee\" differs from traditional exchanges. While centralized exchanges typically charge different fees to market makers (who add liquidity via limit orders) and takers (who remove liquidity via market orders), DeFi lending protocols and AMMs generally don't make this distinction.\n\nIn the Malda protocol specifically, there's no explicit implementation of maker fees. Instead, the system employs various other fee structures:\n\n1. **Gas fees**: Fees to cover transaction costs across chains (implemented in `mTokenGateway.sol` with functions like `setGasFee`)\n2. **Bridge fees**: Fees for cross-chain operations (found in bridge contracts like `EverclearBridge.sol` and `AcrossBridge.sol`)\n3. **Protocol fees**: General fees that may be collected by the protocol\n\nLiquidity providers in such systems typically earn returns through interest accrual or a share of trading fees proportional to their contribution to the liquidity pool, rather than through a maker/taker fee model. This aligns with the broader DeFi trend of simplifying fee structures while still incentivizing liquidity provision."
+  },
+  {
+    "terms": [
+      "Taker Fee"
+    ],
+    "definition": "# Taker Fee\n\nA fee charged by decentralized exchanges when users consume existing liquidity through actions like swaps or cross-chain transfers. Unlike standard swap fees that apply to all transactions, taker fees specifically target operations that remove liquidity from the protocol. In the Malda system, these fees appear to be implemented as customizable parameters within bridge interactions (as seen in `EverclearBridge.sol` with `maxFee` and `feeParams` structures) and can be adjusted by protocol administrators. Taker fees are deducted directly from the transaction amount and collected by the protocol or designated entities, providing an additional revenue stream beyond standard protocol fees."
+  },
+  {
+    "terms": [
+      "Margin Trading"
+    ],
+    "definition": "# Margin Trading\n\nMargin trading in this DeFi lending protocol context refers to the practice where users deposit collateral assets to borrow other assets, creating leveraged positions. The Malda codebase implements this through several key components:\n\n1. **Position Management** - Users deposit tokens as collateral and can borrow against them up to a certain limit based on collateralization ratios\n2. **Risk Assessment** - The system tracks borrowed amounts and collateral values using structures like `BorrowSnapshot` and `accountAssets` mappings\n3. **Liquidation Mechanics** - If a user's position becomes undercollateralized (when borrowed value exceeds allowed threshold relative to collateral), liquidators can repay the debt and claim collateral at a discount (defined by `liquidationIncentiveMantissa`)\n4. **Market Controls** - Parameters like `closeFactorMantissa` determine how much of an underwater position can be liquidated at once\n\nUnlike traditional exchange-based margin trading, this form of leverage is created through lending/borrowing relationships directly on-chain, with all positions, interest accrual, and liquidation conditions enforced by smart contracts. The system maintains solvency through algorithmic monitoring of collateral values and rapid liquidation of risky positions."
+  },
+  {
+    "terms": [
+      "Leverage"
+    ],
+    "definition": "# Leverage\n\nIn the context of decentralized lending protocols like Malda, \"leverage\" has two important meanings:\n\n1. **Financial Leverage**: The ability for users to amplify their market exposure by borrowing assets against their collateral. This is controlled by protocol parameters like collateral factors, liquidation incentives, and close factors found in `OperatorStorage.sol`. When users deposit collateral worth $100 and borrow $75 against it, they're using 1.75x leverage.\n\n2. **Protocol Extensibility**: The architectural pattern where core protocol functionality can be extended through modular components without modifying the base contracts. This is evident in Malda's design with:\n   - Host/Extension pattern (`mErc20Host.sol`, `mTokenGateway.sol`)\n   - Separate implementations for different functionality\n   - Proxy contracts allowing for upgrades\n\nThe codebase demonstrates both concepts, with financial leverage being managed through liquidation mechanics and collateral factors, while protocol extensibility is achieved through the modular design that allows new features to be \"plugged in\" at designated integration points."
+  },
+  {
+    "terms": [
+      "Hedging"
+    ],
+    "definition": "# Hedging\n\nIn decentralized lending protocols like Malda, hedging refers to strategic risk management operations designed to protect liquidity providers and the protocol from adverse market conditions. At its core, hedging involves automated balance management across multiple chains and markets to minimize impermanent loss and maintain optimal asset allocation.\n\nThe protocol implements hedging primarily through its rebalancing mechanism, where designated rebalancers can extract funds from markets using functions like `extractForRebalancing()` to redistribute liquidity based on demand forecasts and risk exposure. This cross-chain hedging strategy ensures that no single market becomes overexposed to a volatile asset or liquidity imbalance.\n\nUnlike traditional finance hedging (which often uses derivatives), Malda's hedging is implemented via smart contract logic that programmatically adjusts positions across markets and chains. The semi-trusted Rebalancer role cannot transfer user funds directly but can optimize the distribution of assets to maintain protocol health and reduce systematic risk, effectively serving as an automated hedging mechanism for the entire ecosystem."
+  },
+  {
+    "terms": [
+      "Swap"
+    ],
+    "definition": "# Swap\n\nA swap is a core financial operation in DeFi protocols where one token is exchanged for another through a liquidity pool rather than an order book. In this codebase, swaps underlie cross-chain operations and are tracked through accumulators (`accAmountIn` and `accAmountOut`) which record token flows for each user. \n\nWhen a user performs a swap, the protocol calculates exchange rates based on the pool's current reserves and any applicable interest or fees. Swaps typically require parameters like direction (which token in, which out), amount specification (fixed input or fixed output), and slippage tolerance to protect users from unexpected price movements.\n\nThe implementation includes safety features like operation pausing (`paused` mapping), verification of liquidity availability, and tracking mechanisms for cross-chain reconciliation. In Malda's multi-chain architecture, swaps involve the Sequencer which coordinates proofs and executes operations across chains, and the Rebalancer which maintains appropriate liquidity distribution between deployments.\n\nThe `extractForRebalancing` and `getProofData` functions in the codebase support the cross-chain nature of swaps by facilitating rebalancing operations and generating verifiable proofs of token movements."
+  },
+  {
+    "terms": [
+      "Futures"
+    ],
+    "definition": "# Futures\n\nIn the context of the Malda protocol, there is no implementation of \"Futures\" contracts in the traditional financial sense (agreements to buy or sell assets at predetermined future prices). The codebase focuses on cross-chain lending/borrowing functionality, providing unified liquidity across multiple blockchains, with no evidence of derivatives trading features.\n\nThe protocol architecture instead centers on:\n- Spot markets for assets like USDC, USDT, wBTC, and wETH\n- Cross-chain settlement via ZK-proofs\n- Lending and borrowing functionality\n- Unified liquidity pools across multiple blockchains\n\nAny references to \"futures\" in the codebase would likely pertain to asynchronous programming constructs (such as in the Rust components with `tokio::join!` patterns) rather than financial derivatives products."
+  },
+  {
+    "terms": [
+      "Options"
+    ],
+    "definition": "# Options\n\nIn the Malda protocol's lending context, \"Options\" refers to configurable parameters that allow for customization of protocol behavior during deployment, updates, or user interactions. These options include:\n\n1. **Oracle Configuration Options** - Parameters defining price feed sources, staleness periods, and asset-specific details:\n   ```solidity\n   MixedPriceOracleV4.PriceConfig memory cfg = MixedPriceOracleV4.PriceConfig({\n       api3Feed: address(api3),\n       eOracleFeed: address(eOracle),\n       toSymbol: \"USD\",\n       underlyingDecimals: 18\n   });\n   ```\n\n2. **Interest Model Options** - Parameters controlling lending rate behaviors:\n   ```solidity\n   abi.encode(\n       data.blocksPerYear,\n       data.baseRatePerYear,\n       data.multiplierPerYear,\n       data.jumpMultiplierPerYear,\n       data.kink,\n       owner,\n       data.name\n   )\n   ```\n\n3. **Deployment Salt Options** - Customizable deployment identifiers for deterministic contract addresses:\n   ```solidity\n   bytes32 salt = getSalt(\"MixedPriceOracleV4V1.0.1\");\n   ```\n\nThese options provide critical flexibility to the protocol, allowing for market-specific configurations, chain-specific adjustments, and facilitating the multi-chain architecture of the Malda lending system without requiring code changes."
+  },
+  {
+    "terms": [
+      "Derivatives"
+    ],
+    "definition": "# Derivatives\n\nIn the context of decentralized finance (DeFi), derivatives are financial contracts whose value is derived from the performance of an underlying asset, index, or entity. These can include options, futures, or other complex financial instruments built on top of existing tokens or liquidity pools. While not explicitly implemented in the core protocols of many decentralized exchanges, derivatives can be created using the exchange's liquidity and price discovery mechanisms as a foundation. For example, the concept of range orders in some decentralized exchanges can be seen as a primitive form of a derivative, approximating limit orders in traditional finance."
+  },
+  {
+    "terms": [
+      "Stablecoin"
+    ],
+    "definition": "# Stablecoin\n\nA cryptocurrency designed to maintain a stable value relative to a specific asset or basket of assets, most commonly pegged to the US dollar (like USDC, USDT, USDS). In lending protocols such as Malda, stablecoins serve as critical components by:\n\n1. Providing low-volatility assets for lending and borrowing operations\n2. Serving as reliable collateral with predictable liquidation values\n3. Acting as the underlying asset for interest-bearing derivative tokens (e.g., mUSDC, mUSDT)\n4. Offering consistent price reference points for oracles and risk calculations\n\nStablecoins are integrated through standard ERC-20 interfaces, configured with specific parameters (such as 6-decimal precision for USDC/USDT), and typically receive favorable risk settings like higher collateral factors due to their reduced price volatility."
+  },
+  {
+    "terms": [
+      "Collateral"
+    ],
+    "definition": "# Collateral\n\nIn the Malda lending protocol, collateral refers to assets that users deposit to secure their borrowing positions. These assets serve as security that can be seized if a loan cannot be repaid or if market conditions reduce the collateral's value below critical thresholds. Each supported asset (like USDC, wETH, wstETH) has a specific \"collateral factor\" that determines what percentage of the asset's value can be borrowed against - typically less than 100% to provide a safety buffer. \n\nThe protocol continuously monitors the ratio between borrowed amounts and collateral value. If this ratio exceeds allowable limits, the position becomes eligible for liquidation, where third-party liquidators can repay a portion of the debt and claim the corresponding collateral at a discount (the liquidation incentive). This mechanism protects lenders and maintains system solvency during market volatility.\n\nCollateral management is a fundamental aspect of the protocol's risk framework, with functions for setting collateral factors, calculating seizable tokens during liquidation, and tracking which markets hold a user's collateral assets."
+  },
+  {
+    "terms": [
+      "Yield Farming"
+    ],
+    "definition": "# Yield Farming\n\nYield farming in the Malda protocol refers to the practice of earning additional rewards by providing liquidity (supplying assets) to the lending platform. The protocol uses a `RewardDistributor` contract that tracks user participation through supply and borrow activities and distributes incentive tokens accordingly. When users deposit supported assets like USDC, wETH, or LSTs (Liquid Staking Tokens), they receive mTokens representing their positions, which qualify them for rewards beyond standard interest. The system notifies indices and distributes rewards based on liquidity contribution and engagement metrics, with customizable distribution logic that can be adjusted for different farming strategies. This mechanism benefits both users (through additional yield) and the protocol (by attracting and maintaining liquidity)."
+  },
+  {
+    "terms": [
+      "Staking"
+    ],
+    "definition": "# Staking\n\nIn the Malda lending protocol, staking refers to the process where users supply or deposit assets into lending markets to earn interest and potentially additional rewards through the RewardDistributor system. Unlike traditional DEX staking where users lock LP tokens in dedicated staking contracts, Malda's approach is more aligned with lending protocols like Compound or Aave, where \"staking\" effectively means becoming a supplier/lender in the protocol. \n\nUsers deposit supported assets (like USDC, wBTC, wETH, or LSTs like wstETH) into mToken contracts (e.g., mUSDC, mwstETH), which represent their lending position. These positions can accrue value through interest and may receive additional incentives distributed by the RewardDistributor contract. While the positions are \"locked\" in the sense that users must redeem their mTokens to withdraw the underlying assets, there is no separate staking mechanism with LP tokens or NFTs as seen in DEX liquidity incentive programs."
+  },
+  {
+    "terms": [
+      "APR (Annual Percentage Rate)",
+      "APR",
+      "Annual Percentage Rate"
+    ],
+    "definition": "# APR (Annual Percentage Rate)\n\nAPR in decentralized finance (DeFi) protocols represents the annualized rate of return or cost expressed as a simple interest percentage over a one-year period. In the Malda lending protocol, APR is the fundamental metric used to calculate interest that liquidity providers earn or borrowers pay.\n\nThe protocol implements APR through the `JumpRateModelV4` contract, which defines three key components:\n\n- `baseRatePerYear`: The minimum interest rate applied regardless of utilization\n- `multiplierPerYear`: A factor that increases the rate as utilization increases toward a \"kink\" point\n- `jumpMultiplierPerYear`: A higher multiplier applied when utilization exceeds the kink threshold\n\nThese annual rates are converted to per-block rates for on-chain calculation using:\n```solidity\nbaseRatePerBlock = baseRatePerYear / blocksPerYear;\nmultiplierPerBlock = multiplierPerYear * 1e18 / (blocksPerYear * kink_);\njumpMultiplierPerBlock = jumpMultiplierPerYear / blocksPerYear;\n```\n\nUnlike APY (Annual Percentage Yield), APR does not account for the effects of compounding. For instance, an 8% APR on a $1,000 deposit would yield $80 in simple interest over a year, assuming constant rates and no reinvestment of earned interest.\n\nIn practice, the protocol uses APR as a standardized measure to help users compare potential returns across different pools and make informed decisions about where to allocate their capital."
+  },
+  {
+    "terms": [
+      "APY (Annual Percentage Yield)",
+      "APY",
+      "Annual Percentage Yield"
+    ],
+    "definition": "# APY (Annual Percentage Yield)\n\nAPY in DeFi lending protocols represents the annualized rate of return that liquidity providers (lenders) can expect to earn on their deposits, with compound interest factored in. In the Malda protocol, APY is derived from the `supplyRatePerBlock` calculated by the interest rate model, which is then annualized based on the expected number of blocks per year.\n\nThe protocol's interest rate model (JumpRateModelV4) determines rates using parameters like `baseRatePerBlock`, `multiplierPerBlock`, and `jumpMultiplierPerBlock`, which vary based on market utilization. When calculating APY, the per-block supply rate is compounded over the entire year:\n\nAPY = (1 + supplyRatePerBlock)^blocksPerYear - 1\n\nUnlike APR (Annual Percentage Rate) which represents simple interest, APY accounts for the compound effect of continuously reinvesting earned interest. APY fluctuates based on market conditions including utilization rates, total borrows, and reserve factors configured by governance.\n\nHigher utilization of the lending pool typically results in higher APYs for suppliers, but actual returns may vary as market conditions change over time."
+  },
+  {
+    "terms": [
+      "Gas Fee"
+    ],
+    "definition": "# Gas Fee\n\nIn the context of blockchain protocols like Malda, a gas fee is a fixed or configurable amount of cryptocurrency set by administrators to cover cross-chain transaction costs. Unlike standard network gas fees (which compensate validators for processing transactions), these protocol-level gas fees are:\n\n1. **Chain-specific** - Different destination chains have different fee requirements\n2. **Administrator-controlled** - Set by protocol owners rather than determined by network congestion\n3. **Pre-payment required** - Users must attach sufficient value with their transaction to meet the required fee\n4. **Withdrawable** - Accumulated fees can be claimed by authorized protocol participants\n\nGas fees in this context serve as a mechanism to ensure the protocol can cover operational costs for cross-chain messaging, compensate relayers, or pay for underlying Layer 1 transaction expenses. Users interacting with cross-chain functions like transferring assets between chains must include the appropriate gas fee amount with their transaction, or the operation will be rejected with a `NotEnoughGasFee()` error.\n\nThe protocol manages these fees through dedicated helper contracts (like `DefaultGasHelper`) that maintain a mapping of chain IDs to their respective fee amounts."
+  },
+  {
+    "terms": [
+      "Smart Contract"
+    ],
+    "definition": "# Smart Contract\n\nA smart contract is a self-executing computer program deployed on a blockchain that automatically enforces the terms of an agreement between parties without requiring intermediaries. In the Malda protocol context, smart contracts are Solidity programs deployed across multiple Ethereum-compatible blockchains (Ethereum, Base, Arbitrum, etc.) that implement the core protocol logic for cross-chain lending and borrowing.\n\nThese contracts handle critical functions like managing token deposits/withdrawals, calculating interest rates, enforcing collateral requirements, verifying zero-knowledge proofs for cross-chain operations, and coordinating liquidity across different networks. The protocol utilizes specialized contracts such as `mTokenHost` for asset management, `Operator` for coordination, `ZkVerifier` for proof validation, and various role-based contracts to control permissions and security.\n\nUnlike traditional agreements that require trust or third-party enforcement, smart contracts execute automatically when predefined conditions are met, with their operations transparently recorded on the blockchain and their code open to verification, creating a trust-minimized system for decentralized finance applications."
+  },
+  {
+    "terms": [
+      "DeFi"
+    ],
+    "definition": "# DeFi\n\nDecentralized Finance (DeFi) refers to blockchain-based financial systems that operate without centralized intermediaries like banks or brokers. In the Malda protocol context, DeFi specifically describes a cross-chain lending platform that unifies fragmented liquidity across multiple Ethereum-compatible networks (Ethereum, Base, Linea, Optimism, Arbitrum) into a seamless lending experience.\n\nMalda's implementation of DeFi includes:\n1. Non-custodial architecture where users maintain control of their assets\n2. Smart contract automation for lending, borrowing, and liquidations\n3. Cross-chain lending markets with unified liquidity pools and interest rates\n4. Zero-knowledge proofs (via RiscZero zkVM) to secure cross-chain operations\n5. Modular, composable components including oracles, mToken markets, and bridge connectors\n\nUnlike traditional finance requiring trusted intermediaries, Malda's DeFi solution uses transparent, immutable smart contracts and cryptographic proofs to create a trustless, permissionless lending ecosystem that spans multiple blockchains simultaneously."
+  },
+  {
+    "terms": [
+      "CeFi"
+    ],
+    "definition": "# CeFi\n\nCentralized Finance (CeFi) in the context of the Malda protocol refers to the protocol's reliance on trusted, centralized entities to execute critical operations instead of fully trustless smart contracts. The protocol explicitly designates centralized components including a \"Sequencer\" that executes cross-chain actions and delivers proofs, and a \"Rebalancer\" that maintains liquidity across deployments. As noted in the Q&A documentation, \"Sequencer (Centralized) - Expected to deliver proofs and execute UserOps via those proofs for all multichain interactions\" and \"Rebalancer (Centralized) - Expected to maintain liquidity across all deployments.\"\n\nWhile the protocol operates on blockchain technology, these centralized elements create a hybrid model where users must trust specific actors to correctly manage protocol functions rather than relying solely on decentralized, permissionless mechanisms. This architectural choice aims to provide better performance (\"lower latency\") and additional security checks \"that are not feasible with current ZK technology,\" representing a deliberate trade-off between pure decentralization and operational efficiency."
+  },
+  {
+    "terms": [
+      "DAO"
+    ],
+    "definition": "# DAO (Decentralized Autonomous Organization)\n\nA Decentralized Autonomous Organization (DAO) is a blockchain-based organizational structure where governance and decision-making are distributed among members rather than concentrated in a traditional hierarchy. DAOs operate through smart contracts that automatically execute decisions made by the community, typically through token-based voting mechanisms.\n\nIn contrast to traditional organizations with centralized management, DAOs empower stakeholders to collectively propose, debate, and implement changes to the protocol, manage treasury funds, and make strategic decisions. This governance approach aligns with blockchain's core principles of decentralization and transparency, as all activities and votes are recorded on-chain and executable through code rather than human intermediaries.\n\nWhile the Malda protocol referenced in the codebase uses role-based permissions (Owner, Sequencer, Rebalancer, Pauser) rather than fully decentralized governance, many DeFi protocols eventually transition control to DAOs, allowing token holders to guide the protocol's evolution through democratic processes."
+  },
+  {
+    "terms": [
+      "Liquidity Mining"
+    ],
+    "definition": "# Liquidity Mining\n\nLiquidity mining in the Malda protocol refers to a reward mechanism where users earn MALDA tokens (the protocol's native token) by participating in the lending protocol. Users can earn rewards in two primary ways: by supplying assets to lending markets (acting as lenders) and by borrowing from these markets (acting as borrowers).\n\nThe rewards distribution is handled by the `Operator` and `RewardDistributor` contracts, which track user participation across different markets and calculate rewards accordingly. Unlike traditional AMM liquidity mining where rewards are tied to LP tokens, Malda's implementation follows a Compound-style \"flywheel\" approach where rewards accrue based on a user's supplied or borrowed balances over time.\n\nKey components include:\n- Market-specific supply and borrow indexes that track reward accrual rates\n- Automatic reward accrual on user actions (minting, redeeming, borrowing, repaying)\n- Claim functions that allow users to collect their earned MALDA tokens\n\nThe system is designed to incentivize liquidity provision to the protocol, ensuring there are sufficient assets available for lending and borrowing activities across multiple supported chains."
+  },
+  {
+    "terms": [
+      "Protocol Fee"
+    ],
+    "definition": "# Protocol Fee\n\nA protocol fee is a percentage of transaction value collected by a decentralized protocol, typically ranging from 0% to a small percentage (e.g., 2.8% for liquidations in Malda). Unlike gas fees paid to validators or liquidity provider fees, protocol fees are directed to the protocol's treasury or reserves to fund development, maintenance, and governance initiatives.\n\nIn the Malda codebase, protocol fees are implemented through parameters like `PROTOCOL_SEIZE_SHARE_MANTISSA` (2.8e16 or 2.8%), which defines the portion of seized collateral during liquidations that goes to protocol reserves. Similarly, reserve factors control what percentage of accrued interest is allocated to the protocol rather than to suppliers.\n\nProtocol fees are:\n- Configurable by governance or admin roles\n- Collected in the native tokens of each market\n- Separate from network gas fees or LP rewards\n- Designed to create sustainable revenue for the protocol\n\nThese fees represent a key mechanism for protocol sustainability, allowing decentralized applications to generate revenue for ongoing operations and improvements without relying solely on token emissions or external funding."
+  },
+  {
+    "terms": [
+      "ERC20"
+    ],
+    "definition": "# ERC20\n\nERC20 is a technical standard that defines a common interface for fungible tokens on the Ethereum blockchain and compatible networks. It specifies a set of mandatory functions and events that enable tokens to be transferred, approved for spending by others, and queried for balances.\n\nThe standard requires six core functions:\n- `totalSupply()` - Returns the total token supply\n- `balanceOf(address)` - Returns the token balance of a specific address\n- `transfer(address, uint256)` - Transfers tokens from sender to recipient\n- `transferFrom(address, address, uint256)` - Transfers tokens between accounts using allowances\n- `approve(address, uint256)` - Approves an address to spend tokens on behalf of the sender\n- `allowance(address, address)` - Returns the amount of tokens an address is allowed to spend\n\nERC20 also defines two events:\n- `Transfer(address, address, uint256)` - Emitted when tokens are transferred\n- `Approval(address, address, uint256)` - Emitted when spending approval is granted\n\nThe standard also commonly includes optional metadata fields like `name`, `symbol`, and `decimals`.\n\nERC20's standardized interface enables widespread interoperability across the Ethereum ecosystem, allowing tokens to be seamlessly integrated with wallets, exchanges, lending protocols, and other DeFi applications."
+  },
+  {
+    "terms": [
+      "ERC1155"
+    ],
+    "definition": "# ERC1155\n\nA token standard on Ethereum that allows a single smart contract to represent multiple token types, both fungible and non-fungible tokens (NFTs). Unlike ERC20 (for fungible tokens) or ERC721 (for NFTs) that require separate contracts for each token type, ERC1155 enables efficient management of diverse assets within one contract. It features batch operations for transferring multiple token types in a single transaction, reducing gas costs. This versatility makes it ideal for applications requiring mixed token types, such as gaming platforms where both collectibles (NFTs) and currencies (fungible tokens) need to be managed together."
+  },
+  {
+    "terms": [
+      "ERC6909"
+    ],
+    "definition": "# ERC6909\n\nERC6909 is a minimal, gas-efficient token standard for managing multiple fungible tokens within a single smart contract. Unlike deploying separate ERC20 contracts for each token type, ERC6909 allows tracking multiple token IDs in one contract, significantly reducing deployment costs and gas usage. The standard features a flexible permission system where users can approve operators either for specific token IDs or globally, providing more granular control than ERC1155. ERC6909 intentionally omits mandatory callbacks and complex batch operations to optimize performance, making it particularly suitable for DeFi protocols that handle frequent multi-token interactions. The standard includes core functionality for transfers, mints, burns, and balance tracking while maintaining compatibility with existing token infrastructure."
+  },
+  {
+    "terms": [
+      "X96"
+    ],
+    "definition": "# X96\n\nA fixed-point number representation used in DeFi protocols (particularly ones inspired by Uniswap V3) to handle decimal values with high precision in smart contracts. The \"X96\" suffix indicates that a value has been multiplied by 2^96 and stored as an integer. \n\nThis representation is necessary because the Ethereum Virtual Machine doesn't natively support floating-point operations. By using this fixed-point format, protocols can accurately represent and manipulate very small fractions (crucial for price calculations) while maintaining computational efficiency.\n\nFor example, a price of 1.5 would be stored as `1.5 × 2^96 = 1.5 × 79,228,162,514,264,337,593,543,950,336 ≈ 118,842,243,771,396,506,390,315,925,504` in X96 format. To convert back, you divide by 2^96.\n\nThis notation is commonly seen in variable names like `sqrtPriceX96`, which specifically represents the square root of a price ratio, a critical component in concentrated liquidity DEX calculations."
+  },
+  {
+    "terms": [
+      "Concentrated Liquidity"
+    ],
+    "definition": "# Concentrated Liquidity\n\nIn the Malda protocol, concentrated liquidity refers to the strategic allocation and management of protocol assets across multiple blockchain networks. Unlike traditional AMM implementations (such as Uniswap V3) where concentrated liquidity means allocating capital to specific price ranges, Malda uses this concept to describe how available liquidity is dynamically redistributed across different chains and markets based on demand forecasts.\n\nThe Rebalancer component plays a central role in this process, moving assets where they're most needed rather than evenly distributing them across all supported chains. This approach maximizes capital efficiency by ensuring high-demand markets receive sufficient liquidity while preventing excess idle capital in low-activity deployments.\n\nFor example, if borrowing demand for USDC spikes on Optimism but decreases on Base, the Rebalancer can bridge USDC from Base to Optimism, concentrating liquidity where user activity requires it. This cross-chain liquidity management helps maintain optimal lending/borrowing conditions across the entire protocol ecosystem without requiring redundant liquidity pools on each chain.\n\nThis concentrated approach to cross-chain liquidity management is fundamental to Malda's ability to offer efficient cross-chain lending while maintaining high capital utilization rates."
+  },
+  {
+    "terms": [
+      "Constant Product Formula"
+    ],
+    "definition": "# Constant Product Formula\n\nThe Constant Product Formula is a mathematical equation (x * y = k) that underpins automated market maker (AMM) systems in decentralized finance. In this formula, x and y represent the reserves of two tokens in a liquidity pool, and k is a constant value that must be maintained during all trades.\n\nWhen users trade tokens in a pool that uses this formula, the protocol automatically adjusts token quantities to ensure the product of the reserves remains unchanged. This creates a pricing curve where:\n\n1. The relative price between tokens is determined by their ratio in the pool\n2. Larger trades cause greater price slippage, which protects liquidity\n3. The formula enables permissionless, counterparty-free trading\n\nWhile the audited Malda protocol is primarily a lending platform rather than a DEX, this formula may be relevant in its oracle systems, cross-chain liquidity rebalancing mechanisms, or when interacting with external AMMs to determine token prices for collateral valuation."
+  },
+  {
+    "terms": [
+      "Invariant"
+    ],
+    "definition": "# Invariant\n\nIn software engineering, an invariant is a condition or property that must remain true throughout the execution of a program, regardless of the operations performed. Invariants serve as contracts that guarantee the consistency and correctness of program state.\n\nIn the context of smart contracts and DeFi protocols like Malda, invariants are critical assertions that must hold true for the system to operate correctly and securely. They typically represent mathematical relationships, boundary conditions, or logical properties that should never be violated.\n\nExamples from the codebase show invariants being enforced through:\n\n1. **Error conditions** - Custom errors like `mt_ReserveFactorTooHigh` and `mt_ExchangeRateNotValid` protect mathematical relationships.\n\n2. **Input validation** - Checks such as `require(_verifier != address(0))` maintain state consistency.\n\n3. **Temporal constraints** - Assertions like `assert(created_at >= updated_at)` ensure logical time relationships.\n\n4. **State transitions** - Tests verify that only authorized actors can modify critical system parameters.\n\nInvariants are especially important in financial protocols as they provide guarantees about the system's behavior and protect against economic exploits. They act as guardrails that prevent the protocol from entering invalid states, ensuring that funds are handled correctly and users' assets remain secure."
+  },
+  {
+    "terms": [
+      "Mid Price"
+    ],
+    "definition": "# Mid Price\n\nIn the context of decentralized finance protocols like Malda, the mid price refers to a theoretical reference price that represents the fair value of a token at a specific point in time. In Malda's implementation, this price is determined by aggregating data from multiple oracle sources (specifically API3 feeds and eOracle feeds) through the `MixedPriceOracleV4` contract.\n\nThe mid price serves as the foundation for critical protocol operations such as:\n- Valuing collateral and outstanding loans\n- Calculating account health and risk metrics\n- Determining whether positions should be liquidated\n- Setting reference prices for cross-chain operations\n\nUnlike execution prices (what users actually receive when trading), the mid price is not directly affected by slippage or market depth. It represents what an infinitesimally small trade would theoretically execute at. The system carefully validates these prices by checking for staleness (via `STALENESS_PERIOD`) and excessive deviation between different price sources (via `deltaPerSymbol` thresholds) to ensure reliability.\n\nIn Malda's implementation, when the price delta between sources exceeds acceptable thresholds, the system falls back to alternative price feeds, ensuring the mid price remains a stable reference point even during market volatility."
+  },
+  {
+    "terms": [
+      "AMM Protocol",
+      "Automated Market Maker",
+      "AMM"
+    ],
+    "definition": "# AMM Protocol\n\nAn Automated Market Maker (AMM) protocol is a type of decentralized exchange mechanism that enables token trading without traditional order books. Instead of matching buyers and sellers, AMMs use liquidity pools governed by mathematical formulas to determine asset prices and execute trades.\n\nKey characteristics of AMM protocols include:\n\n1. **Liquidity Pools**: Smart contracts that hold pairs or groups of assets, allowing traders to swap between them.\n\n2. **Price Determination Formula**: A mathematical equation (commonly constant product: x×y=k) that automatically adjusts prices based on pool ratios.\n\n3. **Permissionless Liquidity Provision**: Anyone can contribute assets to pools and earn trading fees proportional to their share.\n\n4. **Decentralized Operation**: Trades execute directly through smart contracts without centralized intermediaries.\n\n5. **Constant Availability**: Unlike order book systems, AMMs provide continuous liquidity regardless of trading volume.\n\nNotable AMM implementations include Uniswap (constant product formula), Curve (designed for similar-value assets), and Balancer (supporting multi-asset pools with customizable weights).\n\nWhile the Malda codebase reviewed doesn't implement an AMM protocol directly (focusing instead on lending functionality), AMMs are commonly integrated with lending protocols for price feeds, liquidation mechanisms, and cross-protocol interactions."
+  },
+  {
+    "terms": [
+      "address(0)"
+    ],
+    "definition": "# address(0)\n\nIn Ethereum and EVM-compatible blockchains, `address(0)` represents the zero address (`0x0000000000000000000000000000000000000000`), which serves as a special sentinel value in smart contracts. It's used to:\n\n1. Detect uninitialized address variables (as this is the default value)\n2. Validate input parameters (rejecting zero addresses for critical operations)\n3. Serve as a \"burn address\" (tokens sent here are effectively removed from circulation)\n4. Represent the absence of a valid address in function parameters\n\nIn the Malda codebase, `address(0)` checks are implemented throughout the system to prevent transactions with invalid addresses, as seen in functions like `addPausableMarket()`, where attempting to register the zero address as a pausable market reverts with `Pauser_AddressNotValid`. Similarly, operations with zero amounts often revert with custom errors like `mTokenGateway_AmountNotValid` or `mErc20Host_AmountNotValid`.\n\nThis pattern is a fundamental security practice in smart contract development, preventing errors such as sending assets to an unrecoverable address or assigning critical roles to non-existent entities."
+  },
+  {
+    "terms": [
+      "EIP-1153"
+    ],
+    "definition": "# EIP-1153\n\nEIP-1153 (Transient Storage Opcodes) introduces a gas-efficient mechanism for temporary storage in Ethereum smart contracts. This proposal adds two opcodes: `TSTORE` and `TLOAD`, which create transaction-scoped storage that costs significantly less than traditional `SSTORE`/`SLOAD` operations (~100 gas vs. ~2100/~2100 gas).\n\nUnlike permanent storage, transient storage values exist only during the current transaction and are automatically cleared when the transaction completes. This makes it ideal for temporary values like reentrancy guards, intermediate calculations, or short-lived flags that don't need persistence.\n\nIn Solidity, transient storage can only be accessed through inline assembly:\n\n```solidity\n// Write to transient storage\nassembly { tstore(slot, value) }\n\n// Read from transient storage\nassembly { value := tload(slot) }\n```\n\nEach contract has its own isolated transient storage space, though this storage is shared across `delegatecall` boundaries. EIP-1153 was implemented in Ethereum's Cancun upgrade (March 2024), and is also available on compatible L2 networks that have upgraded to support these opcodes."
+  },
+  {
+    "terms": [
+      "DEX"
+    ],
+    "definition": "# DEX\n\nA **Decentralized Exchange (DEX)** is a peer-to-peer cryptocurrency trading protocol that operates without intermediaries through smart contracts. Unlike centralized exchanges, DEXs enable users to trade directly from their wallets while maintaining custody of their assets until the moment of trade execution. Most modern DEXs utilize automated market maker (AMM) models with liquidity pools rather than traditional order books.\n\nIn the Malda lending protocol context, DEXs likely provide critical infrastructure for price discovery (via oracles), token swaps for market operations, and liquidity rebalancing across different blockchain networks. The protocol appears to interact with external DEXs through components like the Rebalancer and its bridge implementations, which facilitate cross-chain asset transfers and liquidity management."
+  },
+  {
+    "terms": [
+      "ERC721"
+    ],
+    "definition": "# ERC721\n\nERC721 is the Ethereum token standard for non-fungible tokens (NFTs), which defines how to create and manage unique digital assets on the blockchain. Unlike ERC20 tokens which are fungible (identical and interchangeable), each ERC721 token has a distinct `tokenId` that makes it unique and non-interchangeable.\n\nThe standard includes core functionality like:\n- Ownership tracking with `ownerOf(tokenId)`\n- Balance checking with `balanceOf(owner)`\n- Transfer methods (`transferFrom`, `safeTransferFrom`)\n- Approval mechanisms for delegated transfers\n\nIn this codebase, the `MaldaNft` contract implements ERC721 by inheriting from `ERC721Enumerable`:\n\n```solidity\ncontract MaldaNft is ERC721Enumerable, Ownable {\n    // NFT implementation with additional features\n}\n```\n\nERC721 is commonly extended with additional features, such as:\n- Metadata support (through `tokenURI`)\n- Enumeration capabilities (listing owned tokens)\n- Minting/burning mechanisms\n- Access controls\n\nThe standard enables NFTs to be recognized and managed by wallets, marketplaces, and other applications that support the ERC721 interface, creating interoperability across the Ethereum ecosystem and compatible chains."
+  },
+  {
+    "terms": [
+      "EIP-712"
+    ],
+    "definition": "# EIP-712\n\nEIP-712 is a standard for typed structured data hashing and signing in Ethereum. It allows users to sign rich, structured data (not just random bytes) while providing human-readable information about what's being signed.\n\nThe standard works by:\n1. Defining a structured type system for the data being signed\n2. Creating a domain separator that binds signatures to a specific contract and chain\n3. Generating a cryptographic hash of the data using these type definitions\n4. Producing a signature that can be verified on-chain\n\nIn the Malda codebase, EIP-712 principles are applied in functions like `signature_msg` where domain information, chain ID, and message payload are combined before hashing to create secure, replay-resistant signatures. This approach is particularly valuable for decentralized lending protocols as it enables secure off-chain actions (like order signing or referrals) while ensuring users understand exactly what they're authorizing when they sign a message.\n\nUnlike simple message signing, EIP-712 makes signatures domain-specific (tied to particular contracts and networks), preventing signature replay attacks across different applications or chains."
+  },
+  {
+    "terms": [
+      "Time-Weighted Average Market Maker (TWAMM)",
+      "TWAMM"
+    ],
+    "definition": "# Time-Weighted Average Market Maker (TWAMM)\n\nA sophisticated trading mechanism that executes large orders gradually over an extended timeframe rather than all at once. TWAMMs split large trades into many smaller trades that are executed at regular intervals, calculating a time-weighted average price across the entire execution period. This approach significantly reduces price impact and slippage compared to executing large orders in a single transaction, making it particularly valuable for trading substantial amounts of assets. By spreading execution over time, TWAMMs also provide protection against front-running and sandwich attacks that commonly target large trades. While not directly implemented in the current Malda codebase under review, TWAMM represents an important concept in DeFi market design that helps balance trading efficiency with minimal market disruption."
+  },
+  {
+    "terms": [
+      "Variant Maps"
+    ],
+    "definition": "# Variant Maps\n\nA binary encoding pattern used in smart contracts to efficiently pack multiple boolean flags or properties into a single byte or integer. In this approach, each bit position represents a distinct boolean attribute, allowing several independent flags to be stored and manipulated as one compact value. Variant maps provide gas efficiency by reducing storage costs and computational overhead while maintaining type-safe access to individual properties through specialized getter and setter methods. This technique is particularly valuable in blockchain environments where optimizing for gas usage and storage is critical.\n\nThe pattern enables representing multiple configuration options, states, or flags without requiring separate storage slots for each boolean value, resulting in significant gas savings when reading, writing, or processing these properties within contract operations."
+  },
+  {
+    "terms": [
+      "ECDSA"
+    ],
+    "definition": "# ECDSA\n\nECDSA (Elliptic Curve Digital Signature Algorithm) is a cryptographic algorithm used in the Malda protocol for digital signatures, based on the secp256k1 elliptic curve that Ethereum uses. In this codebase, ECDSA provides several critical security functions:\n\n1. **Signature Creation and Verification**: Enables authentication by verifying that messages were signed by the expected key holder\n2. **Signer Recovery**: Extracts the signer's Ethereum address from a signature and message hash\n3. **Malleability Protection**: Prevents signature manipulation by enforcing the 's' value to be in the lower half of the curve order\n\nThe implementation follows Ethereum conventions with signatures formatted as 65 bytes: 32 bytes for 'r', 32 bytes for 's', and 1 byte for 'v' (recovery ID). The Rust utilities in the zk-coprocessor handle signature parsing (`signature_from_bytes`), message preparation (`signature_msg`), and secure address recovery (`recover_signer`).\n\nThis cryptographic foundation enables secure cross-chain operations, sequencer commitments, and user authentication throughout the protocol, ensuring that only properly authorized transactions can be executed."
+  },
+  {
+    "terms": [
+      "ERC1271"
+    ],
+    "definition": "# ERC1271\n\nERC1271 is a standard interface that enables smart contracts to validate signatures. While traditional Ethereum transactions rely on signatures from Externally Owned Accounts (EOAs), ERC1271 extends this capability to smart contracts by defining a standard method:\n\n```solidity\nfunction isValidSignature(bytes32 hash, bytes memory signature) external view returns (bytes4 magicValue);\n```\n\nWhen implemented, this function allows a contract to verify signatures according to custom logic. If the signature is valid, it must return the magic value `0x1626ba7e` (the function selector). This enables powerful patterns like smart contract wallets, multi-signature schemes, signature delegation, and account abstraction.\n\nIn the Malda protocol, ERC1271 is used as part of the authentication system, supporting both EOA signatures and smart contract-based signature validation, which is particularly important for interactions across multiple chains and for supporting complex account structures in DeFi applications."
+  },
+  {
+    "terms": [
+      "Application-Specific Sequencing (ASS)",
+      "Application-Specific Sequencing",
+      "(ASS)"
+    ],
+    "definition": "# Application-Specific Sequencing (ASS)\n\nApplication-Specific Sequencing is a blockchain architecture approach where individual applications control the ordering of their own transactions rather than relying on the default sequencing mechanisms of the underlying blockchain. In Malda's implementation, a semi-trusted centralized sequencer collects user operations, determines their execution order, and submits them as batched transactions with corresponding ZK proofs. This design prioritizes low latency for cross-chain operations without waiting for full L1 finality, while maintaining security through cryptographic verification.\n\nThe protocol implements censorship resistance through a self-sequencing option, allowing users to generate and submit their own proofs if the sequencer is unavailable or potentially censoring transactions. This approach gives the application more control over transaction ordering, which can help mitigate MEV (Miner Extractable Value) extraction, improve efficiency, and ensure fair execution of user operations across multiple chains including Ethereum, Optimism, Base, Linea, and other supported networks."
+  },
+  {
+    "terms": [
+      "MEV (Maximal Extractable Value)",
+      "MEV",
+      "Maximal Extractable Value"
+    ],
+    "definition": "# MEV (Maximal Extractable Value)\n\nMaximal Extractable Value (MEV) refers to the maximum profit that can be extracted from blockchain networks by reordering, inserting, or censoring transactions within blocks. This value is typically captured by miners, validators, or specialized \"searchers\" who exploit transaction ordering opportunities.\n\nIn DeFi systems, MEV manifests through strategies like front-running (executing a transaction before a known pending transaction), back-running (executing after), or sandwich attacks (doing both to profit from price movements). These practices can harm regular users through higher slippage, failed transactions, and general market inefficiency.\n\nWell-designed protocols implement MEV mitigation strategies to protect participants. These include batch processing of transactions at uniform prices (preventing order-specific advantages), priority auctions that internalize MEV profits for protocol stakeholders rather than external extractors, and mechanisms that limit the visibility or manipulability of pending transactions.\n\nEffective MEV protection requires considering the entire transaction lifecycle - from submission through mempool visibility to final execution - to create fair, predictable outcomes regardless of block producer behavior or external monitoring capabilities."
+  },
+  {
+    "terms": [
+      "Orderbook"
+    ],
+    "definition": "# OrderBook\n\nAn OrderBook is a fundamental data structure in trading systems that maintains organized collections of buy (bid) and sell (ask) orders for a specific trading pair or asset. Implemented as a Rust struct, it contains:\n\n- A unique `PoolId` identifying the trading pair\n- Two sorted vectors: one for bid orders and one for ask orders\n- An optional Automated Market Maker (AMM) snapshot for hybrid liquidity models\n\n```rust\npub struct OrderBook {\n    id:   PoolId,\n    amm:  Option<MarketSnapshot>,\n    bids: Vec<OrderWithStorageData<GroupedVanillaOrder>>,\n    asks: Vec<OrderWithStorageData<GroupedVanillaOrder>>\n}\n```\n\nThe OrderBook employs sorting strategies (typically by price, then by volume or time) to facilitate efficient order matching. Bids are usually sorted in descending price order, while asks are sorted in ascending price order, enabling quick identification of the best available prices and efficient trade execution.\n\nThe order book is central to price discovery, providing a real-time view of market depth and liquidity. It serves as the primary interface between traders' intentions and the matching engine that executes trades when compatible orders are found."
+  },
+  {
+    "terms": [
+      "Top-of-Block (ToB)",
+      "Top-of-Block",
+      "ToB"
+    ],
+    "definition": "# Top-of-Block (ToB)\n\nTop-of-Block (ToB) is a specialized order type in blockchain systems designed to be executed at the earliest possible position within a new block. ToB orders receive priority execution before other transactions, making them valuable for time-sensitive trading strategies or operations requiring minimal slippage.\n\nThese orders contain specific parameters including input/output asset quantities, gas limits, asset addresses, block number validity constraints, and recipient information. By being processed at block creation, ToB orders avoid the price impact of subsequent transactions within the same block.\n\nThis mechanism is particularly valuable in DeFi applications where transaction ordering can significantly impact trade outcomes, allowing traders to capture arbitrage opportunities, avoid front-running, and execute trades with greater determinism."
+  }
+]

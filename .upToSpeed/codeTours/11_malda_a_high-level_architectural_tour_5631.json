@@ -1,0 +1,283 @@
+{
+  "title": "1.1: Malda: A High-Level Architectural Tour",
+  "id": "st9PfBeHGPQkC5to1Uzl2ZFej2/rP+Kwj5ev4xQ272g=",
+  "originalId": 5631,
+  "position": 1,
+  "steps": [
+    {
+      "type": "textOnly",
+      "description": "Welcome to this architectural walkthrough of the `Malda Protocol`.\n\n`Malda Protocol` is a decentralized, cross-chain lending platform designed to unify liquidity across different blockchains. The protocol enables users to access lending markets across different L2s as if they were a single network, with unified liquidity and interest rates, while executing lending operations across chains without bridging or wrapping assets.",
+      "title": "",
+      "id": "70612"
+    },
+    {
+      "type": "textOnly",
+      "description": "The Malda Protocol is composed of two main components that work together to enable secure cross-chain lending:\n\n* `malda-lending`: The on-chain Solidity smart contracts that manage lending and borrowing operations\n\n* `malda-zk-coprocessor`: The off-chain component that uses zero-knowledge proofs (ZKPs) to secure cross-chain actions\n\nThis walkthrough will follow a transaction's journey between these two worlds, showing how a user can supply an asset on one chain to receive tokens on another.",
+      "title": "",
+      "id": "70613"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/mToken/extension/mTokenGateway.sol"
+      ],
+      "description": "Our journey begins with the `mTokenGateway` contract - this is where users interact with the protocol to perform cross-chain operations. This contract serves as the bridge between different blockchains in the Malda ecosystem.",
+      "title": "",
+      "id": "70614",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "A user's cross-chain journey begins with the `supplyOnHost` function. This is the entry point where a user supplies an asset on their current chain. Notice that this function doesn't mint tokens itself - instead, it locks the user's assets (line 237) and emits the `mTokenGateway_Supplied` event (lines 242-251). This event contains all the information needed for the cross-chain operation.",
+      "file": "malda-lending/src/mToken/extension/mTokenGateway.sol",
+      "highlight": [
+        {
+          "start": 224,
+          "end": 252
+        }
+      ],
+      "title": "",
+      "id": "70615",
+      "hideAreas": []
+    },
+    {
+      "type": "textOnly",
+      "description": "The `mTokenGateway_Supplied` event is detected by the off-chain `malda-zk-coprocessor`. This sophisticated component generates a secure zero-knowledge proof to validate this cross-chain action, ensuring that no fraudulent transactions can be processed. The ZK coprocessor will be detailed in its own dedicated tour.",
+      "title": "",
+      "id": "70616"
+    },
+    {
+      "type": "highlight",
+      "description": "The transaction arrives on the destination chain through the `outHere` function. An off-chain **Relayer** calls this function, passing in the data from the original supply operation and the ZK proof. The function processes multiple journal entries in batches (lines 268-278), allowing multiple cross-chain operations to be settled in a single transaction.",
+      "file": "malda-lending/src/mToken/extension/mTokenGateway.sol",
+      "highlight": [
+        {
+          "start": 257,
+          "end": 279
+        }
+      ],
+      "title": "",
+      "id": "70617",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "Inside the `outHere` function, we reach the critical security checkpoint. The `_verifyProof` function (line 265) calls `verifier.verifyInput` (line 336) to validate the ZK proof from the co-processor. This verification step is the security lynchpin of the entire cross-chain design - it ensures that no fraudulent cross-chain messages can be processed.",
+      "file": "malda-lending/src/mToken/extension/mTokenGateway.sol",
+      "highlight": [
+        {
+          "start": 316,
+          "end": 336
+        }
+      ],
+      "title": "",
+      "id": "70618",
+      "hideAreas": []
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/verifier/ZkVerifier.sol"
+      ],
+      "description": "Let's examine the `ZkVerifier` contract - the guardian of cross-chain security. This contract has one critical job: validate **zero-knowledge proofs** from the co-processor to ensure system integrity.",
+      "title": "",
+      "id": "70619",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `verifyInput` function is where all cross-chain security is enforced. It validates the ZK proof using the `RISC0` verifier (line 100), checking both the proof seal and the journal data. The verification uses a specific `imageId` (line 100) that corresponds to the trusted ZK program, ensuring only legitimate cross-chain operations can proceed.",
+      "file": "malda-lending/src/verifier/ZkVerifier.sol",
+      "highlight": [
+        {
+          "start": 86,
+          "end": 101
+        }
+      ],
+      "title": "",
+      "id": "70620",
+      "hideAreas": []
+    },
+    {
+      "type": "mcq",
+      "description": "Based on the cross-chain transaction flow we've looked at, what is the specific role of the **ZkVerifier** contract?\n\nOptions:\n\n A). It generates the zero-knowledge proof that validates the supply action on the host chain.\n\nB). It is responsible for transferring the underlying assets to the receiver on the destination chain.\n\nC). It emits the initial event on the host chain that the off-chain coprocessor listens for.\n\nD). It verifies the integrity of the off-chain proof, ensuring the cross-chain message is authentic before assets are released.\n\n\nCorrect: D). It verifies the integrity of the off-chain proof, ensuring the cross-chain message is authentic before assets are released.\n\nExplanation: This is the correct function. The `ZkVerifier`'s role is quite specific: it acts as the on-chain security gate. It confirms that the proof (`seal`) and message (`journalData`) provided by an off-chain relayer are authentic and originate from the trusted ZK program. Proof generation happens off-chain, and the `mTokenGateway` handles both the initial event emission and the final asset transfer.",
+      "title": "",
+      "id": "70636",
+      "text": "Based on the cross-chain transaction flow we've looked at, what is the specific role of the **ZkVerifier** contract?",
+      "answers": [
+        "It generates the zero-knowledge proof that validates the supply action on the host chain.",
+        "It is responsible for transferring the underlying assets to the receiver on the destination chain.",
+        "It emits the initial event on the host chain that the off-chain coprocessor listens for.",
+        "It verifies the integrity of the off-chain proof, ensuring the cross-chain message is authentic before assets are released."
+      ],
+      "correct": 3,
+      "explanation": "This is the correct function. The `ZkVerifier`'s role is quite specific: it acts as the on-chain security gate. It confirms that the proof (`seal`) and message (`journalData`) provided by an off-chain relayer are authentic and originate from the trusted ZK program. Proof generation happens off-chain, and the `mTokenGateway` handles both the initial event emission and the final asset transfer."
+    },
+    {
+      "type": "highlight",
+      "description": "After successful proof verification, the `_outHere` internal function handles the actual token transfer. On line 301, it safely transfers the underlying asset to the user. This completes the cross-chain journey - the user has successfully received their tokens on the destination chain.",
+      "file": "malda-lending/src/mToken/extension/mTokenGateway.sol",
+      "highlight": [
+        {
+          "start": 281,
+          "end": 301
+        }
+      ],
+      "title": "",
+      "id": "70621",
+      "hideAreas": []
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/mToken/mToken.sol"
+      ],
+      "description": "Now let's explore the `mToken` contract - the heart of the lending system. An `mToken` is an interest-bearing token that represents a user's supplied asset in the protocol, similar to `cTokens` in Compound.",
+      "title": "",
+      "id": "70622",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `mToken` contract provides core lending functionality through functions like `_mint`. This internal function handles the supply of assets to the protocol, accruing interest and minting tokens to represent the user's stake in the market.",
+      "file": "malda-lending/src/mToken/mToken.sol",
+      "highlight": [
+        {
+          "start": 266,
+          "end": 273
+        }
+      ],
+      "title": "",
+      "id": "70623",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `_borrow` function allows users to borrow assets against their collateral. These core functions (`mint`, `redeem`, `borrow`, `repay`) form the foundation of the lending protocol, with detailed implementations that will be explored in dedicated mToken tours.",
+      "file": "malda-lending/src/mToken/mToken.sol",
+      "highlight": [
+        {
+          "start": 311,
+          "end": 315
+        }
+      ],
+      "title": "",
+      "id": "70624",
+      "hideAreas": []
+    },
+    {
+      "type": "textOnly",
+      "description": "How does the mToken contract know the rules of the market? Who determines borrowing limits, collateral factors, and liquidation thresholds? The answer lies in a central contract called the `Operator` - the administrative and risk-management hub of the entire protocol.",
+      "title": "",
+      "id": "70625"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/Operator/Operator.sol"
+      ],
+      "description": "The `Operator` contract is the brain of the `Malda Protocol`. It manages market configurations, risk parameters, user permissions, and coordinates all the complex interactions between different components of the system.",
+      "title": "",
+      "id": "70626",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `getAccountLiquidity` function is one of the most critical operations in the protocol. It calculates whether a user has sufficient collateral to support their borrowing positions. This function is called before every risky operation to prevent undercollateralized positions.",
+      "file": "malda-lending/src/Operator/Operator.sol",
+      "highlight": [
+        {
+          "start": 391,
+          "end": 393
+        }
+      ],
+      "title": "",
+      "id": "70627",
+      "hideAreas": []
+    },
+    {
+      "type": "textOnly",
+      "description": "But how does the Operator know the value of different assets? How can it calculate if a user's ETH collateral is sufficient to borrow USDC? The answer lies in the `Oracle` system that provides real-time price feeds.",
+      "title": "",
+      "id": "70628"
+    },
+    {
+      "type": "revealFiles",
+      "files": [
+        "malda-lending/src/oracles/ChainlinkOracle.sol"
+      ],
+      "description": "Let's examine one of the oracle implementations - the `ChainlinkOracle`. This contract provides reliable price feeds that the protocol uses for its risk calculations.",
+      "title": "",
+      "id": "70629",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `getUnderlyingPrice` function fetches the current market price for any asset in the protocol. It normalizes prices from `Chainlink feeds` (line 67-68) and adjusts for different token decimals, ensuring consistent pricing across all markets. These prices are used for liquidation calculations, borrowing limits, and risk management.",
+      "file": "malda-lending/src/oracles/ChainlinkOracle.sol",
+      "highlight": [
+        {
+          "start": 63,
+          "end": 69
+        }
+      ],
+      "title": "",
+      "id": "70630",
+      "hideAreas": []
+    },
+    {
+      "type": "textOnly",
+      "description": "Security and governance are paramount in DeFi protocols. Malda implements a sophisticated **Access Control** system to manage permissions, handle emergencies, and protect against malicious actors. Let's explore these critical security components.",
+      "title": "",
+      "id": "70631"
+    },
+    {
+      "type": "highlight",
+      "description": "The `Roles contract` defines various permission levels throughout the system. From `REBALANCER` and `GUARDIAN_PAUSE` to `PROOF_FORWARDER` and `SEQUENCER`, each role has specific capabilities. This granular permission system ensures that only authorized entities can perform sensitive operations.",
+      "file": "malda-lending/src/Roles.sol",
+      "highlight": [
+        {
+          "start": 35,
+          "end": 49
+        }
+      ],
+      "title": "",
+      "id": "70632",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `Blacklister` contract provides the ability to block malicious actors from interacting with the protocol. The `blacklist` and `unblacklist` functions (lines 64 and 69) can only be called by owners or guardians, acting as a defense mechanism against bad actors.",
+      "file": "malda-lending/src/blacklister/Blacklister.sol",
+      "highlight": [
+        {
+          "start": 64,
+          "end": 74
+        }
+      ],
+      "title": "",
+      "id": "70633",
+      "hideAreas": []
+    },
+    {
+      "type": "highlight",
+      "description": "The `Pauser` contract enables emergency shutdowns when threats are detected. The `emergencyPauseAll` function can halt all operations across all markets, providing a critical safeguard. This emergency mechanism ensures the protocol can respond quickly to any security incidents.",
+      "file": "malda-lending/src/pauser/Pauser.sol",
+      "highlight": [
+        {
+          "start": 99,
+          "end": 109
+        }
+      ],
+      "title": "",
+      "id": "70634",
+      "hideAreas": []
+    },
+    {
+      "type": "textOnly",
+      "description": "## Architecture Summary\n\nWe've now seen how the **`Malda Protocol`** creates a unified cross-chain lending experience:\n\n*   **`mTokenGateway`** handles cross-chain transactions, secured by zero-knowledge proofs\n*   **`ZkVerifier`** ensures only legitimate cross-chain operations proceed\n*   **`mTokens`** represent interest-bearing deposits in the lending markets\n*   **`Operator`** manages risk, permissions, and market rules\n*   **`Oracles`** provide price data for all calculations\n*   **`Access Control`** protects the system through granular permissions, blacklisting, and emergency controls\n\nYou're now ready to dive deeper into each component through the detailed tours of `mTokens`, `Operators`, `Oracles`, and `Access Control` systems.",
+      "title": "",
+      "id": "70635"
+    }
+  ]
+}
