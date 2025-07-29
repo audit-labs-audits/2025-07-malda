@@ -2,7 +2,7 @@
   "packageName": "malda",
   "packageVersion": 1,
   "hash": "798d00b879b8412ca4049ba09dba5ae42464cfe7",
-  "numberOfTours": 12,
+  "numberOfTours": 11,
   "titleOfTours": [
     "1.1: Malda: A High-Level Architectural Tour",
     "2.1: AccessControl: Overview",
@@ -14,10 +14,9 @@
     "3.3: MixedPriceOracle: Resilient Price Feeds",
     "3.4: Gas Helpers: Managing Oracle Gas Costs",
     "4.1: InterestRateModel: Overview",
-    "4.2: InterestRateModel: JumpRateModelV4 Deep Dive",
     "Want to learn more?"
   ],
-  "totalNumberOfSteps": 171,
+  "totalNumberOfSteps": 169,
   "filesCovered": [
     "malda-lending/src/mToken/extension/mTokenGateway.sol",
     "malda-lending/src/verifier/ZkVerifier.sol",
